@@ -49,6 +49,8 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #join.hug{background:linear-gradient(135deg,rgba(255,150,170,.4),rgba(255,255,255,.1))}
 #join svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 @keyframes jpop{from{opacity:0}to{opacity:1}}
+#bar #b4{display:none}
+body.pv #bar #b4{display:flex}
 #turn{position:absolute;z-index:3;display:flex;gap:8px;right:calc((100% - var(--navw)) / 2 + 14px);bottom:calc(var(--nav) + 40px + env(safe-area-inset-bottom))}
 #turn button{width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
 #turn button:hover,#turn button:active{opacity:.95;background:rgba(255,255,255,.22)}
@@ -94,6 +96,7 @@ window.__showErr=show;})();
     <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01" stroke-width="2.2"/><ellipse cx="12" cy="15.4" rx="2" ry="2.6"/></svg><span>소리지르기</span></button>
     <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 2.8a8.5 8.5 0 1 1-4 16l-3.8 1.3 1.3-3.6A8.5 8.5 0 0 1 12 2.8z"/></svg><span>고민 날려보내기</span></button>
     <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2.1"/><path d="M12 8c-2 0-3.2 1-3.6 2.8L7 15.4c-2 .7-3.5 1.7-3.5 3.1 0 1.2 1.3 2 3 2h11c1.7 0 3-.8 3-2 0-1.4-1.5-2.4-3.5-3.1l-1.4-4.6C15.2 9 14 8 12 8z"/><path d="M8.5 16.5c1 .7 2.2 1 3.5 1s2.5-.3 3.5-1"/></svg><span>명상하기</span></button>
+    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3.500 13.700 9.300 19.500 11 13.700 12.700 12 18.500 10.300 12.700 4.500 11 10.300 9.300Z"/><path d="M18.500 16.500v3.500M16.750 18.250h3.500"/></svg><span>무언가하기</span></button>
   </div>
   <div id="info"></div>
   <div id="toast"></div>
@@ -547,7 +550,7 @@ function updateCrash(t,dt){
 /* ---------- 캐릭터 3D ---------- */
 const eyeMat=new THREE.MeshBasicMaterial({color:'#222644'}),mouthMat=new THREE.MeshBasicMaterial({color:'#3a1c28'});
 function makeChar(L){
-  const root=new THREE.Group(),g=new THREE.Group();root.add(g);
+  const root=new THREE.Group(),g=new THREE.Group();root.rotation.order='YXZ';root.add(g);
   const add=(parent,geo,col,x,y,z,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(geo,col.isMaterial?col:toon(col));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;parent.add(m);return m;};
   const sph=new THREE.SphereGeometry(1,20,14),cap=new THREE.CapsuleGeometry(1,1,6,12),k=L.kind;
   const legs=[],arms=[];
@@ -659,7 +662,7 @@ function animChar(e,dt){
   const ms=lerp(c.mouth.scale.x,tgt.mouth*.13+.001,k);
   c.mouth.scale.set(ms,ms*(m==='scream'?1.35:1),ms*.4);
   const closed=sit||m==='scream'||m==='hug',blink=(t%4)>3.88;
-  for(const sx of [-1,1]){const eye=c.head.userData['eye'+sx];eye.scale.y=closed||blink?.018:.095;}
+  for(const sx of [-1,1]){const eye=c.head.userData['eye'+sx];eye.scale.y=closed||blink||(e.wink&&sx===1)?.018:.095;}
   if(m==='scream')c.root.position.x+=Math.sin(t*60)*.02;
   const tr=c.head.userData.tear,ezf=c.head.userData.ez,tt=(t+e.tearOff)%3,TX=.2,EY=.08;
   let ty=0,tz=0,ts=0,to=.95;
@@ -680,15 +683,19 @@ function mk(id,look,x,z,nm){
 }
 const lkq=qp.has('look')?+qp.get('look'):-1;
 /* 접속할 때마다 나무·바위·통나무·풀·다른 접속자와 겹치지 않는 자리에 무작위로 */
+const VDX=(CAM_TARGET.x-CAM_BASE.x)/Math.hypot(CAM_TARGET.x-CAM_BASE.x,CAM_TARGET.z-CAM_BASE.z),VDZ=(CAM_TARGET.z-CAM_BASE.z)/Math.hypot(CAM_TARGET.x-CAM_BASE.x,CAM_TARGET.z-CAM_BASE.z);
 function pickSpawn(avoid){
   let best=null,bs=-1;
   for(let k=0;k<400;k++){
     const x=-34+Math.random()*46,z=-30+Math.random()*32;
     if(!inside(x,z,4))continue;
-    let dO=1e9,dP=1e9;
-    for(const q of placed)dO=Math.min(dO,Math.hypot(x-q[0],z-q[1]));
+    let dO=1e9,dP=1e9,hid=false;
+    for(let oi=0;oi<placed.length;oi++){const q=placed[oi];dO=Math.min(dO,Math.hypot(x-q[0],z-q[1]));
+      /* 카메라 시점에서 나무·바위 뒤에 가려지는 자리도 피함 */
+      const rx=x-q[0],rz=z-q[1],al=rx*VDX+rz*VDZ,ac=Math.abs(-rx*VDZ+rz*VDX);
+      if(oi<3?(al>-3.5&&al<12&&ac<4):(al>-3&&al<5&&ac<2.6))hid=true;}
     for(const q of avoid)dP=Math.min(dP,Math.hypot(x-q.x,z-q.z));
-    const sc=Math.min(dO/5.2,dP/5);
+    const sc=Math.min(dO/5.2,dP/5)*(hid?.5:1);
     if(sc>=1)return [x,z];
     if(sc>bs){bs=sc;best=[x,z];}
   }
@@ -702,7 +709,7 @@ const bubbles=[];
 let full=false;const heard=new Set();
 const SB_URL='https://eayxuohlyqznxkrkepsp.supabase.co',SB_KEY='sb_publishable_8Rf0JIeEmhXHWfDpRehuxA_DxGDJxPl';
 const joinT=Date.now(),MAX_ROOMS=6;let roomNo=0;
-function setFull(){if(full)return;full=true;net.close();$('full').style.display='flex';for(const id of ['b1','b2','b3'])$(id).disabled=true;}
+function setFull(){if(full)return;full=true;net.close();$('full').style.display='flex';for(const id of ['b1','b2','b3','b4'])$(id).disabled=true;}
 const net=(()=>{
   let h=()=>{},ready=()=>{},ch=null,sb=null,live=false,bc=null;
   function open(){
@@ -774,6 +781,10 @@ net.on(m=>{
   }else if(m.t==='an'){
     p.tyaw=num(m.r,-7,7,p.tyaw);
     if(m.a==='scream'||m.a==='cup'){p.mode=m.a;p.modeT=0;p.tx=p.x;p.tz=p.z;p.joined=null;}
+    else if(m.a==='act'&&(m.k==='fish'||m.k==='flip'||m.k==='climb')){
+      const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<4){p.x=sx;p.z=sz;}
+      startAct(p,m.k,m.sd===-1?-1:1);
+    }
     else if(m.a==='sit'){
       const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<4){p.x=sx;p.z=sz;}
       p.mode='sit';p.tx=p.x;p.tz=p.z;p.joined=typeof m.j==='string'&&m.j.length<=16?m.j:null;
@@ -866,8 +877,106 @@ function fireBubble(e,text,scream,local){
   spawnBubble(e,text,scream,local);
   if(e===me&&!local)net.send({t:'bb',id:me.id,k:scream?'s':'t',i:e.scIdx,text:scream?'':text});
 }
+/* ---------- 무언가하기: 낚시 / 덤블링+윙크 / 나무 오르기 ---------- */
+const ACTS=['fish','flip','climb'],ACT_DUR={fish:9.4,flip:5.9,climb:12};
+const easeIO=u=>u<.5?2*u*u:1-2*(1-u)*(1-u),c01=u=>Math.min(1,Math.max(0,u));
+const _tp=new THREE.Vector3();
+const lmat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
+const pondMat=new THREE.MeshLambertMaterial({color:'#4c8fd6',emissive:'#2a5a9a',emissiveIntensity:.55,flatShading:true});
+const pondRim=new THREE.MeshLambertMaterial({color:'#e8f4ff',emissive:'#9fc4e8',emissiveIntensity:.45,flatShading:true});
+function disposeTree(o){o.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material&&m.material.dispose&&m.material!==pondMat&&m.material!==pondRim)m.material.dispose();});}
+function startAct(e,k,sd){
+  endAct(e,false);
+  const rig=e.rig,a={k,t:0,dur:ACT_DUR[k],P:null};
+  e.mode='act';e.modeT=0;e.tx=e.x;e.tz=e.z;e.pending=null;e.joined=null;e.join=null;e.hug=null;
+  if(k==='fish'||k==='flip'){sd=sd||(inside(e.x+(k==='fish'?7:3),e.z,1.2)?1:-1);a.sd=sd;e.tyaw=e.yaw=sd*Math.PI/2;}
+  else{e.tyaw=e.yaw=0;}
+  if(k==='fish'){
+    const px=e.x+sd*5.4,pz=e.z,py=topY(px,pz)+.2;
+    const g=new THREE.Group(),disc=new THREE.Mesh(new THREE.CircleGeometry(3,14),pondMat),rim=new THREE.Mesh(new THREE.RingGeometry(3,3.5,14),pondRim);
+    disc.rotation.x=rim.rotation.x=-Math.PI/2;rim.position.y=-.02;g.add(disc,rim);g.position.set(px,py,pz);g.scale.setScalar(.01);scene.add(g);
+    const rod=new THREE.Mesh(new THREE.CylinderGeometry(.04,.07,2.6,6),lmat('#8a5a3a'));rod.position.set(0,-2,.05);rig.arms[1].add(rod);
+    const bob=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),lmat('#ff5a4a'));bob.position.set(px-sd*.8,py+.1,pz);scene.add(bob);
+    const lgeo=new THREE.BufferGeometry();lgeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
+    const line=new THREE.Line(lgeo,new THREE.LineBasicMaterial({color:'#ffffff',transparent:true,opacity:.85}));line.frustumCulled=false;scene.add(line);
+    const fish=new THREE.Group(),fb=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),lmat('#ff9a52')),ft=new THREE.Mesh(new THREE.ConeGeometry(.5,.9,4),lmat('#f07a3a'));
+    fb.scale.set(.9,.42,.3);ft.rotation.z=Math.PI/2;ft.position.x=-1.05;fish.add(fb,ft);fish.scale.setScalar(1.7);fish.visible=false;scene.add(fish);
+    a.P={g,rod,bob,line,fish,px,py,pz,bx:px-sd*.8};
+  }else if(k==='climb'){
+    const tx=e.x,tz=e.z-1.4,g=new THREE.Group(),tm=lmat(PAL.tree[3]);
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.6,.95,13,7),tm);trunk.position.y=6.5;trunk.castShadow=true;g.add(trunk);
+    [[2.3,3.2,11.5,0],[1.8,2.8,13.2,1],[1.2,2.4,14.8,1]].forEach(([r,h,y,j],i)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,1),lmat(PAL.tree[j]));m.position.y=y;m.rotation.y=i;m.castShadow=true;g.add(m);});
+    g.position.set(tx,topY(tx,tz),tz);g.scale.setScalar(.01);scene.add(g);a.P={g};
+  }
+  e.act=a;
+}
+function endAct(e,done){
+  const a=e.act;if(!a)return;
+  const P=a.P;
+  if(P){
+    if(a.k==='fish'){e.rig.arms[1].remove(P.rod);P.rod.geometry.dispose();P.rod.material.dispose();scene.remove(P.g,P.bob,P.line,P.fish);P.bob.geometry.dispose();P.bob.material.dispose();P.line.geometry.dispose();P.line.material.dispose();disposeTree(P.fish);P.g.traverse(m=>{if(m.geometry)m.geometry.dispose();});}
+    else{scene.remove(P.g);disposeTree(P.g);}
+  }
+  if(a.k==='flip'&&done){const f=Math.sin(a.yaw0),z=Math.cos(a.yaw0),[nx,nz]=clampTarget(e.x+f*1.05,e.z+z*1.05);e.x=e.tx=nx;e.z=e.tz=nz;}
+  e.rig.root.rotation.x=0;e.cy=0;e.wink=false;e.act=null;
+  if(e.mode==='act')e.mode='idle';
+}
+function actStep(e,dt){
+  const a=e.act;if(!a)return;
+  if(e.mode!=='act'){endAct(e,false);return;}
+  a.t+=dt;const t=a.t;
+  if(t>=a.dur){endAct(e,true);return;}
+  const c=e.rig,ar=c.arms,lg=c.legs,r=c.root,P=a.P,sc=r.scale.x;
+  if(a.k==='fish'){
+    const s=a.sd,cast=easeIO(c01((t-.2)/.6));
+    P.g.scale.setScalar(Math.max(.01,t<.6?easeIO(t/.6):(t>a.dur-.8?easeIO(c01((a.dur-t)/.8)):1)));
+    let armX;
+    if(t<5.2)armX=-1.9*cast+.05*Math.sin(t*1.8)*cast;
+    else if(t<5.9)armX=-1.9+.28*Math.sin((t-5.2)*28);
+    else armX=-1.9-.9*easeIO(c01((t-5.9)/1.1));
+    ar[1].rotation.x=armX;ar[1].rotation.z=0;ar[0].rotation.x=-1.1*cast;ar[0].rotation.z=0;c.head.rotation.x=.12;
+    const reel=c01((t-5.9)/1.1);
+    r.updateMatrixWorld(true);ar[1].localToWorld(_tp.set(0,-3.3,.05));
+    const tx=_tp.x,ty=_tp.y,tz=_tp.z;
+    P.bob.position.y=P.py+.1+(t>5.2&&t<5.9?-.32*Math.sin((t-5.2)/.7*Math.PI):.05*Math.sin(t*3));
+    P.bob.visible=reel<=0;
+    let fx,fy,fz;
+    if(reel<=0){fx=P.bob.position.x;fy=P.bob.position.y;fz=P.bob.position.z;P.fish.visible=false;}
+    else{
+      P.fish.visible=true;
+      if(t<7){const u=easeIO(reel);fx=P.bx+(tx-P.bx)*u;fz=P.pz+(tz-P.pz)*u;fy=P.py+.1+(ty-1.3-P.py-.1)*u+3.2*Math.sin(Math.PI*u);P.fish.rotation.z=.6*Math.sin(t*22);}
+      else{fx=tx+.15*Math.sin(t*4);fy=ty-1.3;fz=tz;P.fish.rotation.z=.35*Math.sin(t*6);}
+      P.fish.position.set(fx,fy,fz);P.fish.rotation.y=s>0?0:Math.PI;
+    }
+    const pa=P.line.geometry.attributes.position;pa.setXYZ(0,tx,ty,tz);pa.setXYZ(1,fx,fy,fz);pa.needsUpdate=true;
+  }else if(a.k==='flip'){
+    if(a.yaw0===undefined)a.yaw0=e.yaw;
+    const T0=.6,FL=.95,N=3,fx=Math.sin(a.yaw0),fz=Math.cos(a.yaw0),h=1.9*sc;
+    let phi=0,jy=0,fw=0,tuck=0;
+    if(t<T0){tuck=0;r.position.y-=.25*sc*Math.sin(t/T0*Math.PI);}
+    else if(t<T0+N*FL){const q=(t-T0)/FL,i=Math.floor(q),u=q-i;phi=(i+easeIO(u))*Math.PI*2;jy=1.5*sc*Math.sin(Math.PI*u);fw=(i+u)*.35;tuck=1;}
+    else{fw=N*.35;if(t<T0+N*FL+.15)r.position.y-=.2*sc;e.tyaw=0;}
+    if(tuck){ar[0].rotation.x=ar[1].rotation.x=-2.3;lg[0].rotation.x=lg[1].rotation.x=-1;c.head.rotation.x=.4;}
+    r.position.x+=fx*fw-fx*h*Math.sin(phi);r.position.z+=fz*fw-fz*h*Math.sin(phi);r.position.y+=h*(1-Math.cos(phi))+jy;r.rotation.x=phi;
+    if(t>3.9){e.wink=true;ar[1].rotation.x=-2.3;ar[1].rotation.z=.35+.2*Math.sin(t*9);if(!a.b&&t>4.1){a.b=true;spawnBubble(e,'✧',false,true);}}
+  }else{
+    const tr=P.g;tr.scale.setScalar(Math.max(.01,t<.7?easeIO(t/.7):(t>a.dur-.7?easeIO(c01((a.dur-t)/.7)):1)));
+    const CY=5.4;let cy=0,climbing=false;
+    if(t<.7)cy=0;
+    else if(t<3.4){cy=CY*easeIO((t-.7)/2.7);climbing=true;}
+    else if(t<8.6)cy=CY;
+    else if(t<11.3){cy=CY*(1-easeIO((t-8.6)/2.7));climbing=true;}
+    e.cy=cy;r.position.y+=cy;
+    if(climbing){const ph=t*7;ar[0].rotation.x=-2.6+.6*Math.sin(ph);ar[1].rotation.x=-2.6-.6*Math.sin(ph);lg[0].rotation.x=.55*Math.sin(ph+Math.PI);lg[1].rotation.x=.55*Math.sin(ph);}
+    else if(cy>=CY-.01){
+      const ph=c01((t-3.4)/5.2);
+      ar[1].rotation.x=-2.35;ar[1].rotation.z=.28;ar[0].rotation.x=-.5;ar[0].rotation.z=-.25;lg[0].rotation.x=.14;lg[1].rotation.x=-.14;
+      c.head.rotation.y=.9*Math.cos(ph*3*Math.PI);
+    }
+  }
+}
 function startHug(t,from){
-  if(t.mode==='sit'||t.mode==='scream'||t.mode==='cup')return;
+  if(t.mode==='sit'||t.mode==='scream'||t.mode==='cup'||t.mode==='act')return;
   t.mode='hug';t.modeT=0;t.tx=t.x;t.tz=t.z;t.pending=null;t.joined=null;t.tyaw=Math.atan2(from.x-t.x,from.z-t.z);
   if(t===me){me.hug=null;me.join=null;hideJoin();}
   spawnBubble(t,'♡',false,true);
@@ -880,6 +989,8 @@ function update(e,dt){
     if(e.modeT>(e.mode==='scream'?1.5:1.7))e.mode='idle';
   }else if(e.mode==='hug'){
     e.modeT+=dt;if(e.modeT>3.8)e.mode='idle';
+  }else if(e.mode==='act'){
+    /* actStep 이 처리 */
   }else if(e.mode!=='sit'){
     const dx=e.tx-e.x,dz=e.tz-e.z,d=Math.hypot(dx,dz);
     if(d>.08){const st=Math.min(d,SPEED*dt);e.x+=dx/d*st;e.z+=dz/d*st;e.tyaw=Math.atan2(dx,dz);e.mode='walk';}
@@ -898,7 +1009,7 @@ function update(e,dt){
   }
   e.yaw+=angDiff(e.yaw,e.tyaw)*Math.min(1,dt*10);
   const r=e.rig.root;r.position.set(e.x,topY(e.x,e.z),e.z);r.rotation.y=e.yaw;r.scale.setScalar(1.65*(e.look.scale||1)*CHARBOOST*clamp(_cd2.copy(r.position).sub(camera.position).dot(_cd)/REFD,.7,1.4));
-  animChar(e,dt);fireStep(e,dt);
+  animChar(e,dt);fireStep(e,dt);actStep(e,dt);
 }
 
 /* ---------- 입력 / UI ---------- */
@@ -912,7 +1023,7 @@ renderer.domElement.addEventListener('pointerdown',ev=>{
     if(Math.hypot(cx-fx,cy-fy)<Math.max(46,64*UK)){showJoin(p);return;}
   }
   for(const p of peers.values()){
-    if(p.mode==='sit'||p.mode==='scream'||p.mode==='cup'||p.mode==='hug')continue;
+    if(p.mode==='sit'||p.mode==='scream'||p.mode==='cup'||p.mode==='hug'||p.mode==='act')continue;
     const [px,py]=toScreen(p.x,topY(p.x,p.z)+2.4,p.z);
     if(Math.hypot(cx-px,cy-py)<Math.max(34,46*UK)){showJoin(p,'hug');return;}
   }
@@ -933,7 +1044,7 @@ function placeJoin(){
   const p=joinTarget;if(!p)return;
   let sx,sy;
   if(joinKind==='hug'){
-    if(!peers.has(p.id)||p.mode==='sit'||p.mode==='scream'||p.mode==='cup'||p.mode==='hug'){hideJoin();return;}
+    if(!peers.has(p.id)||p.mode==='sit'||p.mode==='scream'||p.mode==='cup'||p.mode==='hug'||p.mode==='act'){hideJoin();return;}
     [sx,sy]=toScreen(p.x,topY(p.x,p.z)+5.4,p.z);
   }else{
     if(!peers.has(p.id)||!p.fire||p.mode!=='sit'||p.joined||p.fk<.5){hideJoin();return;}
@@ -978,6 +1089,14 @@ $('b3').onclick=()=>{
   if(full)return;
   if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});toast('다시 일어났어요.',1200);return;}
   startAnim('sit',null);toast('잠시 앉아서 풍경을 바라봐요. 바닥을 누르면 다시 걸어요.',2800);
+};
+if(qp.has('preview'))document.body.classList.add('pv');
+let lastAct=-1;
+$('b4').onclick=()=>{
+  if(full||me.mode==='act')return;
+  let i;do{i=Math.floor(Math.random()*ACTS.length);}while(i===lastAct);lastAct=i;
+  const fk=qp.get('act'),k=ACTS.includes(fk)?fk:ACTS[i];startAct(me,k);
+  net.send({t:'an',id:me.id,a:'act',k,sd:me.act&&me.act.sd,x:me.x,z:me.z});
 };
 $('txt').addEventListener('input',()=>{$('cnt').textContent=$('txt').value.length+'/50';$('err').textContent='';});
 $('cancel').onclick=()=>$('modal').classList.remove('on');
@@ -1037,7 +1156,7 @@ function frame(now){
   camera.getWorldDirection(_cd);
   update(me,dt);for(const p of peers.values())update(p,dt);
   placeJoin();
-  for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
+  for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z)+(e.cy||0),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
     const b=bubbles[i];b.t+=dt;
     if(b.t>BUBBLE_LIFE){b.el.remove();bubbles.splice(i,1);continue;}
@@ -1058,7 +1177,7 @@ function frame(now){
   if(qp.has('closeup')){const gy=topY(me.x,me.z);camera.position.set(me.x+4,gy+3.8,me.z+8.5);camera.lookAt(me.x,gy+2.6,me.z);}
   renderer.render(scene,camera);
   acc+=dt;
-  if(acc>.25){acc=0;for(const id of ['b1','b2','b3'])$(id).disabled=full;$('info').textContent=`${THEME_NAMES[theme]} · 접속 ${peers.size+1}/${MAX_ROOM}${roomNo?` · ${roomNo+1}번 방`:''}`;}
+  if(acc>.25){acc=0;for(const id of ['b1','b2','b3','b4'])$(id).disabled=full;$('info').textContent=`${THEME_NAMES[theme]} · 접속 ${peers.size+1}/${MAX_ROOM}${roomNo?` · ${roomNo+1}번 방`:''}`;}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
