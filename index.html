@@ -660,7 +660,7 @@ function animChar(e,dt){
   c.head.rotation.x=lerp(c.head.rotation.x,tgt.hx,k);c.head.rotation.y=lerp(c.head.rotation.y,tgt.hy,k);
   const ms=lerp(c.mouth.scale.x,tgt.mouth*.13+.001,k);
   c.mouth.scale.set(ms,ms*(m==='scream'?1.35:1),ms*.4);
-  const closed=sit||m==='scream'||m==='hug',blink=(t%4)>3.88;
+  const closed=sit||m==='scream'||m==='hug'||e.cry,blink=(t%4)>3.88;
   for(const sx of [-1,1]){const eye=c.head.userData['eye'+sx];eye.scale.y=closed||blink||(e.wink&&sx===1)?.018:.095;}
   if(m==='scream')c.root.position.x+=Math.sin(t*60)*.02;
   const tr=c.head.userData.tear,ezf=c.head.userData.ez,tt=(t+e.tearOff)%3,TX=.2,EY=.08;
@@ -807,7 +807,7 @@ net.on(m=>{
   }else if(m.t==='an'){
     p.tyaw=num(m.r,-7,7,p.tyaw);
     if(m.a==='scream'||m.a==='cup'){p.mode=m.a;p.modeT=0;p.tx=p.x;p.tz=p.z;p.joined=null;}
-    else if(m.a==='act'&&(m.k==='fish'||m.k==='tea'||m.k==='lie'||m.k==='seed')){
+    else if(m.a==='act'&&(m.k==='fish'||m.k==='tea'||m.k==='lie'||m.k==='seed'||m.k==='cry')){
       const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<12){p.x=sx;p.z=sz;}
       startAct(p,m.k,{sd:m.sd===-1?-1:1,ti:m.ti});
     }
@@ -922,11 +922,11 @@ function fireBubble(e,text,scream,local){
   if(e===me&&!local)net.send({t:'bb',id:me.id,k:scream?'s':'t',i:e.scIdx,text:scream?'':text});
 }
 /* ---------- 스트레스풀기: 낚시 / 나무 위 독서 / 누워서 하늘 보기 ---------- */
-const ACTS=['fish','tea','lie','seed'],ACT_DUR={fish:9.6,tea:11.4,lie:9.8,seed:12};
-const ACT_FOOT={tea:[[3.7,-1.3]],lie:[[-3.2,0],[3.2,0]],seed:[[3,1.5],[4.5,.6],[-3,0]]};
+const ACTS=['fish','tea','lie','seed','cry'],ACT_DUR={fish:9.6,tea:11.4,lie:9.8,seed:12,cry:9.8};
+const ACT_FOOT={tea:[[3.7,-1.3]],lie:[[-3.2,0],[3.2,0]],seed:[[3,1.5],[4.5,.6],[-3,0]],cry:[[-3.4,0],[3.4,0]]};
 const flowers=[];
 const FLC=[['#e8453c','#ff6a55'],['#ff7fa8','#ffa3c0'],['#ffcf3a','#ffe27a'],['#a45cd6','#c18af0'],['#f8f5ee','#ffffff'],['#ff9a3c','#ffb868']];
-const ACT_MSG={fish:'낚시를 하고 있어요',tea:'따듯한 차를 마시고 있어요',lie:'하늘을 바라보고 있어요',seed:'씨앗을 심고 있어요'};
+const ACT_MSG={fish:'낚시를 하고 있어요',tea:'따듯한 차를 마시고 있어요',lie:'하늘을 바라보고 있어요',seed:'씨앗을 심고 있어요',cry:'다 떨쳐내는 중이에요'};
 const easeIO=u=>u<.5?2*u*u:1-2*(1-u)*(1-u),c01=u=>Math.min(1,Math.max(0,u));
 const _tp=new THREE.Vector3();
 const lmat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
@@ -993,6 +993,12 @@ function startAct(e,k,o){
     }
     fg.add(stem,blossom);fg.position.set(hx,hy+.15,hz);fg.scale.setScalar(.01);scene.add(fg);
     a.P={hole,pile,shovel,seed,fg,stem,blossom,lf,hx,hy,hz,ppx,ppz};
+  }else if(k==='cry'){
+    const sd=o.sd===-1?-1:(o.sd===1?1:(inside(e.x+5,e.z,1.2)?1:-1));a.sd=sd;e.tyaw=e.yaw=sd*Math.PI/2;
+    const dg=new THREE.SphereGeometry(1,5,4),dm=new THREE.MeshBasicMaterial({color:'#6fc2ff',transparent:true,opacity:.95}),drops=[];
+    for(let i=0;i<110;i++){const m=new THREE.Mesh(dg,dm);m.visible=false;scene.add(m);drops.push({m,v:new THREE.Vector3(),on:false});}
+    const pud=new THREE.Mesh(new THREE.CircleGeometry(1,16),new THREE.MeshBasicMaterial({color:'#8fcdf5',transparent:true,opacity:.55,depthWrite:false}));pud.rotation.x=-Math.PI/2;pud.visible=false;scene.add(pud);
+    a.P={drops,dg,dm,pud,acc:0,pz:null};
   }else{
     const sd=o.sd===-1?-1:(o.sd===1?1:(inside(e.x+5,e.z,1.2)?1:-1));a.sd=sd;e.tyaw=e.yaw=sd*Math.PI/2;
     a.P={};
@@ -1004,12 +1010,13 @@ function endAct(e,done){
   const P=a.P;
   if(a.k==='fish'&&P){e.rig.arms[1].remove(P.rod);P.rod.geometry.dispose();P.rod.material.dispose();scene.remove(P.bob,P.line,P.fish);disposeObj(P.bob);disposeObj(P.line);disposeObj(P.fish);}
   else if(a.k==='tea'&&P){scene.remove(P.ch,...P.puffs);disposeObj(P.ch);P.puffs.forEach(disposeObj);e.rig.arms[1].remove(P.mug);disposeObj(P.mug);e.rig.g.position.y=0;}
+  else if(a.k==='cry'&&P){P.drops.forEach(d=>scene.remove(d.m));scene.remove(P.pud);P.dg.dispose();P.dm.dispose();P.pud.geometry.dispose();P.pud.material.dispose();}
   else if(a.k==='seed'&&P){
     e.rig.arms[1].remove(P.shovel);disposeObj(P.shovel);scene.remove(P.hole,P.seed);disposeObj(P.hole);disposeObj(P.seed);
     if(done){flowers.push({objs:[P.fg,P.pile],base:[P.fg.scale.clone(),P.pile.scale.clone()],t:0});while(flowers.length>10){const f=flowers.shift();f.objs.forEach(o=>{scene.remove(o);disposeObj(o);});}}
     else{scene.remove(P.fg,P.pile);disposeObj(P.fg);disposeObj(P.pile);}
   }
-  e.rig.root.rotation.x=0;e.rig.g.rotation.x=0;e.rig.g.position.y=0;e.cy=0;e.smile=0;e.act=null;
+  e.rig.root.rotation.x=0;e.rig.g.rotation.x=0;e.rig.g.position.y=0;e.rig.head.rotation.y=0;e.cy=0;e.smile=0;e.cry=false;e.act=null;
   if(e.mode==='act')e.mode='idle';
 }
 function actStep(e,dt){
@@ -1075,6 +1082,31 @@ function actStep(e,dt){
     P.blossom.position.y=H;P.blossom.scale.setScalar(Math.max(.01,bl));
     if(t>6.9)e.smile=.5*c01((t-7.5)/.6);
     if(e===me&&!a.t2&&t>9.2){a.t2=true;toast('마음에도 작은 꽃이 피었어요',3800);}
+  }else if(a.k==='cry'){
+    const sd=a.sd,dur=a.dur,down=easeIO(c01(t/1.0)),up=easeIO(c01((t-(dur-1.2))/1.0)),am=down*(1-up);
+    r.rotation.x=Math.PI/2*am;
+    r.position.y+=.62*sc*am+(.07*Math.sin(t*19))*am;r.position.x-=sd*1.6*sc*am;
+    e.cry=am>.3;e.smile=.95*am;
+    c.head.rotation.y=-sd*1.25*am;
+    const ph=t*12;
+    ar[0].rotation.x=ar[1].rotation.x=-1.5*am-.35*Math.sin(ph)*am;ar[0].rotation.z=.35*am;ar[1].rotation.z=-.35*am;
+    ar[1].rotation.x=-1.5*am-.35*Math.sin(ph+Math.PI)*am;
+    lg[0].rotation.x=.45*Math.sin(ph*.9)*am;lg[1].rotation.x=.45*Math.sin(ph*.9+Math.PI)*am;
+    if(e===me&&!a.t2&&t>5.4){a.t2=true;toast('곧 그칠 거예요',3600);}
+    if(am>.6&&t<dur-1.4){
+      r.updateMatrixWorld(true);
+      P.acc+=dt*85;
+      while(P.acc>=1){
+        P.acc-=1;const d=P.drops.find(x=>!x.on);if(!d)break;
+        c.head.localToWorld(_tp.set((Math.random()<.5?-1:1)*.22,.08,.7));
+        d.on=true;d.t=0;d.m.visible=true;d.m.position.copy(_tp);d.m.scale.setScalar(.14+Math.random()*.14);
+        d.v.set((Math.random()-.5)*3.2-VDX*3.2,2+Math.random()*4.2,(Math.random()-.5)*3.2-VDZ*3.2);
+      }
+      if(P.pz===null){c.head.localToWorld(_tp.set(0,0,.5));P.pz=[_tp.x,_tp.z];P.pud.position.set(_tp.x,topY(_tp.x,_tp.z)+.09,_tp.z);P.pud.visible=true;}
+      P.pud.scale.setScalar(Math.min(2.1,.2+(t-1)*.5));
+    }
+    if(P.pz&&t>dur-1.6)P.pud.scale.multiplyScalar(.96);
+    for(const d of P.drops){if(!d.on)continue;d.v.y-=15*dt;d.m.position.addScaledVector(d.v,dt);const gy=topY(d.m.position.x,d.m.position.z)+.08;if(d.m.position.y<gy){d.on=false;d.m.visible=false;}}
   }else{
     const sd=a.sd,f=[sd,0],down=easeIO(c01(t/1.1)),up=easeIO(c01((t-(a.dur-1.3))/1.1)),am=down*(1-up);
     r.rotation.x=-Math.PI/2*am;
@@ -1214,7 +1246,7 @@ $('b3').onclick=()=>{
 let lastAct=-1;
 $('b4').onclick=()=>{
   if(full||me.mode==='act'||me.go)return;
-  const W={fish:.45,tea:1,lie:1,seed:1};
+  const W={fish:.45,tea:1,lie:1,seed:1,cry:1};
   let i,tries=0;do{let r=Math.random()*ACTS.reduce((a,k,j)=>a+(j===lastAct?0:W[k]),0);i=0;for(let j=0;j<ACTS.length;j++){if(j===lastAct)continue;r-=W[ACTS[j]];if(r<=0){i=j;break;}}}while(i===lastAct&&++tries<5);lastAct=i;
   const fk=qp.get('act'),k=ACTS.includes(fk)?fk:ACTS[i];
   toast(ACT_MSG[k],4800);
