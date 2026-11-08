@@ -111,7 +111,7 @@ window.__showErr=show;})();
 <script type="module">
 import * as THREE from 'three';
 const MAX_ROOM=20,COOLDOWN=5000,MAXLEN=50,SPEED=9;
-const BUBBLE_LIFE=5.2,PEER_TTL=13000,HEARTBEAT=5000,PEER_MIN_BUBBLE_GAP=4500;
+const BUBBLE_LIFE=5.2,PEER_TTL=13000,HEARTBEAT=5000,PEER_MIN_BUBBLE_GAP=4500,PEER_MIN_SCREAM_GAP=1200;
 const SCREAMS=['악!!!!!!','으아아아악!!!!!!','이제 그만!!!!!!','속이 터질 것 같아!!!!!!','답답해!!!!!!','소리 지르고 싶어!!!!!!',
  '힘들어!!!!!!','진짜 지쳤어!!!!!!','제발 좀 쉬자!!!!!!','너무 피곤해!!!!!!','하루만 쉬고 싶어!!!!!!',
  '내 말 좀 들어줘!!!!!!','나 좀 봐줘!!!!!!','사실 괜찮지 않아!!!!!!','아무도 몰라줘!!!!!!','나도 외로워!!!!!!',
@@ -738,11 +738,15 @@ net.on(m=>{
     spawnBubble(p,'♡',false,true);
   }else if(m.t==='bb'){
     const now=Date.now();
-    if(now-p.lastBubble<PEER_MIN_BUBBLE_GAP)return;
     let text;
-    if(m.k==='s')text=SCREAMS[Number.isInteger(m.i)&&m.i>=0&&m.i<SCREAMS.length?m.i:0];
-    else{const r=checkText(m.text);if(!r.ok||r.care)return;text=r.text;}
-    p.lastBubble=now;spawnBubble(p,text,m.k==='s');
+    if(m.k==='s'){
+      if(now-(p.lastScream||0)<PEER_MIN_SCREAM_GAP)return;
+      text=SCREAMS[Number.isInteger(m.i)&&m.i>=0&&m.i<SCREAMS.length?m.i:0];p.lastScream=now;
+    }else{
+      if(now-p.lastBubble<PEER_MIN_BUBBLE_GAP)return;
+      const r=checkText(m.text);if(!r.ok||r.care)return;text=r.text;p.lastBubble=now;
+    }
+    spawnBubble(p,text,m.k==='s');
   }
 });
 setInterval(()=>{net.send(hello());},HEARTBEAT);
@@ -915,7 +919,7 @@ function startAnim(mode,pending){
   net.send({t:'an',id:me.id,a:mode,r:me.tyaw,x:me.x,z:me.z});
 }
 function ready(){if(full)return false;const c=cdLeft();if(c>0){toast(`${Math.ceil(c/1000)}초 후에 가능해요`,1500);return false;}return true;}
-$('b1').onclick=()=>{if(!ready())return;cdUntil=Date.now()+COOLDOWN;const si=Math.floor(Math.random()*SCREAMS.length);me.scIdx=si;startAnim('scream',{at:.45,text:SCREAMS[si],scream:true});};
+$('b1').onclick=()=>{if(full||me.mode==='scream')return;const si=Math.floor(Math.random()*SCREAMS.length);me.scIdx=si;startAnim('scream',{at:.45,text:SCREAMS[si],scream:true});};
 $('b2').onclick=()=>{if(!ready())return;$('err').textContent='';$('txt').value='';$('cnt').textContent='0/50';$('modal').classList.add('on');setTimeout(()=>$('txt').focus(),50);};
 $('b3').onclick=()=>{
   if(full)return;
