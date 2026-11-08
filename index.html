@@ -70,7 +70,8 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #acts{display:flex;gap:10px;justify-content:center;margin-top:10px}
 #acts .btn{min-width:104px;border:0;text-shadow:none;box-shadow:0 8px 28px rgba(0,20,50,.18),inset 0 1px 0 rgba(255,255,255,.28)}
 #full{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(10,20,40,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:17px;line-height:1.7;padding:20px;z-index:6}
-#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#64714f;z-index:20;font-size:15px;transition:opacity .5s}
+#loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#64714f;z-index:20;font-size:15px;font-weight:300;letter-spacing:.04em;color:#fff;transition:opacity .5s}
+#loading svg{width:min(64vw,230px);height:auto;overflow:visible}
 @media (max-width:640px){#bar .btn{font-size:12.5px}#hint{font-size:13.5px}#toast{font-size:14px}}
 @media (max-height:520px){:root{--nav:74px;--navw:min(420px,calc(100% - 24px))}#bar{padding:5px 6px;width:min(420px,calc(100% - 24px));bottom:calc(16px + env(safe-area-inset-bottom))}#bar .btn{flex-direction:row;gap:6px;font-size:12px;padding:5px 4px}#bar .btn svg{width:18px;height:18px}#info,#credit{font-size:11px;bottom:calc(var(--nav) + 12px + env(safe-area-inset-bottom))}#hint{font-size:12.5px;top:calc(20px + env(safe-area-inset-top))}#toast{font-size:13px;bottom:calc(var(--nav) + 36px + env(safe-area-inset-bottom))}}
 @media (min-width:1500px){:root{--navw:620px}#info,#credit{font-size:15px}#hint{font-size:17px}#toast{font-size:17px}#bar{width:620px}}
@@ -101,7 +102,25 @@ window.__showErr=show;})();
   <div id="turn"><button id="vl" aria-label="왼쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M14.500 5.500 8 12l6.500 6.500"/></svg></button><button id="vr" aria-label="오른쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M9.500 5.500 16 12l-6.500 6.500"/></svg></button></div>
   <div id="credit">by. kunilkim</div>
   <div id="full">지금은 언덕이 가득 찼어요.<br>잠시 후에 다시 와주세요.</div>
-  <div id="loading">풍경을 그리는 중…</div>
+  <div id="loading">
+    <svg viewBox="0 0 204 84" aria-hidden="true">
+      <path d="M6 66 C30 66 34 34 60 38 C78 41 84 56 104 50 C124 44 128 16 152 20 C172 24 178 52 198 56" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" opacity=".9">
+        <animate attributeName="stroke-dashoffset" dur="2.8s" repeatCount="indefinite" values="100;0;0" keyTimes="0;.78;1"/>
+        <animate attributeName="opacity" dur="2.8s" repeatCount="indefinite" values=".9;.9;0" keyTimes="0;.88;1"/>
+      </path>
+      <g>
+        <animateMotion dur="2.8s" repeatCount="indefinite" path="M6 66 C30 66 34 34 60 38 C78 41 84 56 104 50 C124 44 128 16 152 20 C172 24 178 52 198 56" keyPoints="0;1;1" keyTimes="0;.78;1" calcMode="linear"/>
+        <animate attributeName="opacity" dur="2.8s" repeatCount="indefinite" values="1;1;0" keyTimes="0;.88;1"/>
+        <g transform="rotate(-8) scale(1.45)">
+          <path d="M0 0 L2.600 -4.600 L5.600 -2.600 Z" fill="#f3e6c8"/>
+          <path d="M3.800 -3.800 L14 -14 L17.200 -10.800 L7 -0.600 Z" fill="#fff" opacity=".95"/>
+          <path d="M14 -14 L16.200 -16.200 L19.400 -13 L17.200 -10.800 Z" fill="#e9b8a0"/>
+          <path d="M0 0 L1 -1.700 L1.700 -1" fill="none" stroke="#3b4430" stroke-width=".9" stroke-linecap="round"/>
+        </g>
+      </g>
+    </svg>
+    <span>풍경을 그리는 중…</span>
+  </div>
 </div>
 <div id="modal">
   <div id="box">
