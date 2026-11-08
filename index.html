@@ -94,7 +94,7 @@ window.__showErr=show;})();
     <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01" stroke-width="2.2"/><ellipse cx="12" cy="15.4" rx="2" ry="2.6"/></svg><span>소리지르기</span></button>
     <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 2.8a8.5 8.5 0 1 1-4 16l-3.8 1.3 1.3-3.6A8.5 8.5 0 0 1 12 2.8z"/></svg><span>고민 날려보내기</span></button>
     <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2.1"/><path d="M12 8c-2 0-3.2 1-3.6 2.8L7 15.4c-2 .7-3.5 1.7-3.5 3.1 0 1.2 1.3 2 3 2h11c1.7 0 3-.8 3-2 0-1.4-1.5-2.4-3.5-3.1l-1.4-4.6C15.2 9 14 8 12 8z"/><path d="M8.5 16.5c1 .7 2.2 1 3.5 1s2.5-.3 3.5-1"/></svg><span>명상하기</span></button>
-    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3.500 13.700 9.300 19.500 11 13.700 12.700 12 18.500 10.300 12.700 4.500 11 10.300 9.300Z"/><path d="M18.500 16.500v3.500M16.750 18.250h3.500"/></svg><span>무언가하기</span></button>
+    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M5 19.500C4.500 11 9.500 5 19.500 4.500 20 14 14.500 19.500 5 19.500Z"/><path d="M5 19.500 14 10.500"/></svg><span>스트레스풀기</span></button>
   </div>
   <div id="info"></div>
   <div id="toast"></div>
@@ -420,7 +420,8 @@ function makeTree(sc,seed){
     const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,1),lm(new THREE.Color(PAL.tree[Math.min(k,1)]).lerp(new THREE.Color('#ffffff'),k*.08)));m.position.y=y;m.rotation.y=seed+k;m.castShadow=true;grp.add(m);});
   grp.scale.set(sc,sc*1.55,sc);return grp;
 }
-function addTree(x,z,sc,seed){[x,z]=clampTarget(x,z);const t=makeTree(sc,seed);t.position.set(x,topY(x,z),z);scene.add(t);return t;}
+const treeList=[];
+function addTree(x,z,sc,seed){[x,z]=clampTarget(x,z);const t=makeTree(sc,seed);t.position.set(x,topY(x,z),z);scene.add(t);treeList.push(t);return t;}
 /* 섬 전체에 골고루: 서로 최대한 떨어진 자리를 차례로 고름 (모든 접속자 동일 배치) */
 const R7=mulberry32(7),placed=[];
 function spot(margin){
@@ -652,6 +653,7 @@ function animChar(e,dt){
   else if(m==='scream'){tgt.a0=-2.9;tgt.a1=-2.9;tgt.hx=-.5;tgt.mouth=1;}
   else if(m==='hug'){tgt.a0=-1.3;tgt.a1=-1.3;tgt.az=.5;tgt.hx=.1;tgt.mouth=.25;tgt.hy=clamp(angDiff(e.yaw,Math.atan2(camera.position.x-e.x,camera.position.z-e.z))*.7,-.8,.8);}
   else if(m==='cup'){tgt.a0=-1.95;tgt.a1=-1.95;tgt.az=.55;tgt.mouth=.4;}
+  if(e.smile)tgt.mouth=Math.max(tgt.mouth,e.smile);
   const lg=c.legs,ar=c.arms;
   lg[0].rotation.x=lerp(lg[0].rotation.x,tgt.l0,k);lg[1].rotation.x=lerp(lg[1].rotation.x,tgt.l1,k);
   ar[0].rotation.x=lerp(ar[0].rotation.x,tgt.a0,k);ar[1].rotation.x=lerp(ar[1].rotation.x,tgt.a1,k);
@@ -779,9 +781,9 @@ net.on(m=>{
   }else if(m.t==='an'){
     p.tyaw=num(m.r,-7,7,p.tyaw);
     if(m.a==='scream'||m.a==='cup'){p.mode=m.a;p.modeT=0;p.tx=p.x;p.tz=p.z;p.joined=null;}
-    else if(m.a==='act'&&(m.k==='fish'||m.k==='flip'||m.k==='climb')){
-      const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<4){p.x=sx;p.z=sz;}
-      startAct(p,m.k,m.sd===-1?-1:1);
+    else if(m.a==='act'&&(m.k==='fish'||m.k==='read'||m.k==='lie')){
+      const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<12){p.x=sx;p.z=sz;}
+      startAct(p,m.k,{sd:m.sd===-1?-1:1,ti:m.ti});
     }
     else if(m.a==='sit'){
       const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<4){p.x=sx;p.z=sz;}
@@ -875,48 +877,60 @@ function fireBubble(e,text,scream,local){
   spawnBubble(e,text,scream,local);
   if(e===me&&!local)net.send({t:'bb',id:me.id,k:scream?'s':'t',i:e.scIdx,text:scream?'':text});
 }
-/* ---------- 무언가하기: 낚시 / 덤블링+윙크 / 나무 오르기 ---------- */
-const ACTS=['fish','flip','climb'],ACT_DUR={fish:9.4,flip:5.9,climb:12};
+/* ---------- 스트레스풀기: 낚시 / 나무 위 독서 / 누워서 하늘 보기 ---------- */
+const ACTS=['fish','read','lie'],ACT_DUR={fish:9.6,read:10.6,lie:9.8};
+const ACT_MSG={fish:'스트레스를 풀기위해 낚시를 하고 있어요.',read:'스트레스를 풀기위해 책을 읽고 있어요',lie:'스트레스를 풀기위해 하늘을 바라보고 있어요'};
 const easeIO=u=>u<.5?2*u*u:1-2*(1-u)*(1-u),c01=u=>Math.min(1,Math.max(0,u));
 const _tp=new THREE.Vector3();
 const lmat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
-const pondMat=new THREE.MeshLambertMaterial({color:'#4c8fd6',emissive:'#2a5a9a',emissiveIntensity:.55,flatShading:true});
-const pondRim=new THREE.MeshLambertMaterial({color:'#e8f4ff',emissive:'#9fc4e8',emissiveIntensity:.45,flatShading:true});
-function disposeTree(o){o.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material&&m.material.dispose&&m.material!==pondMat&&m.material!==pondRim)m.material.dispose();});}
-function startAct(e,k,sd){
-  endAct(e,false);
+function disposeObj(o){o.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material&&m.material.dispose)m.material.dispose();});}
+/* 섬 가장자리(카메라 쪽 해안)에서 가장 가까운 자리와 바깥쪽 방향 */
+function edgeNormal(x,z){let gx=(x-IC[0])/(IRX*IRX),gz=(z-IC[1])/(IRZ*IRZ);const l=Math.hypot(gx,gz)||1;return [gx/l,gz/l];}
+function edgeSpot(fx,fz){
+  let best=null,bd=1e9;
+  for(let k=0;k<36;k++){
+    const th=k/36*Math.PI*2,[x,z]=clampTarget(IC[0]+Math.cos(th)*IRX*1.4,IC[1]+Math.sin(th)*IRZ*1.4),[nx,nz]=edgeNormal(x,z);
+    if(-(nx*VDX+nz*VDZ)<.25)continue;
+    const d=Math.hypot(x-fx,z-fz);if(d<bd){bd=d;best=[x,z];}
+  }
+  return best;
+}
+function nearestTree(x,z){let bi=0,bd=1e9;treeList.forEach((t,i)=>{const d=Math.hypot(t.position.x+2.5-x,t.position.z-z);if(d<bd){bd=d;bi=i;}});return bi;}
+function startAct(e,k,o){
+  endAct(e,false);o=o||{};
   const rig=e.rig,a={k,t:0,dur:ACT_DUR[k],P:null};
-  e.mode='act';e.modeT=0;e.tx=e.x;e.tz=e.z;e.pending=null;e.joined=null;e.join=null;e.hug=null;
-  if(k==='fish'||k==='flip'){sd=sd||(inside(e.x+(k==='fish'?7:3),e.z,1.2)?1:-1);a.sd=sd;e.tyaw=e.yaw=sd*Math.PI/2;}
-  else{e.tyaw=e.yaw=0;}
+  e.mode='act';e.modeT=0;e.tx=e.x;e.tz=e.z;e.pending=null;e.joined=null;e.join=null;e.hug=null;e.go=null;
   if(k==='fish'){
-    const px=e.x+sd*5.4,pz=e.z,py=topY(px,pz)+.2;
-    const g=new THREE.Group(),disc=new THREE.Mesh(new THREE.CircleGeometry(3,14),pondMat),rim=new THREE.Mesh(new THREE.RingGeometry(3,3.5,14),pondRim);
-    disc.rotation.x=rim.rotation.x=-Math.PI/2;rim.position.y=-.02;g.add(disc,rim);g.position.set(px,py,pz);g.scale.setScalar(.01);scene.add(g);
+    const [nx,nz]=edgeNormal(e.x,e.z);a.n=[nx,nz];e.tyaw=e.yaw=Math.atan2(nx,nz);
+    const bx=e.x+nx*8.5,bz=e.z+nz*8.5,by=WATER+.2;
     const rod=new THREE.Mesh(new THREE.CylinderGeometry(.04,.07,2.6,6),lmat('#8a5a3a'));rod.position.set(0,-2,.05);rig.arms[1].add(rod);
-    const bob=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),lmat('#ff5a4a'));bob.position.set(px-sd*.8,py+.1,pz);scene.add(bob);
+    const bob=new THREE.Mesh(new THREE.SphereGeometry(.28,8,6),lmat('#ff5a4a'));bob.position.set(bx,by,bz);scene.add(bob);
     const lgeo=new THREE.BufferGeometry();lgeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
     const line=new THREE.Line(lgeo,new THREE.LineBasicMaterial({color:'#ffffff',transparent:true,opacity:.85}));line.frustumCulled=false;scene.add(line);
     const fish=new THREE.Group(),fb=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),lmat('#ff9a52')),ft=new THREE.Mesh(new THREE.ConeGeometry(.5,.9,4),lmat('#f07a3a'));
     fb.scale.set(.9,.42,.3);ft.rotation.z=Math.PI/2;ft.position.x=-1.05;fish.add(fb,ft);fish.scale.setScalar(1.7);fish.visible=false;scene.add(fish);
-    a.P={g,rod,bob,line,fish,px,py,pz,bx:px-sd*.8};
-  }else if(k==='climb'){
-    const tx=e.x,tz=e.z-1.4,g=new THREE.Group(),tm=lmat(PAL.tree[3]);
-    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.6,.95,13,7),tm);trunk.position.y=6.5;trunk.castShadow=true;g.add(trunk);
-    [[2.3,3.2,11.5,0],[1.8,2.8,13.2,1],[1.2,2.4,14.8,1]].forEach(([r,h,y,j],i)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,1),lmat(PAL.tree[j]));m.position.y=y;m.rotation.y=i;m.castShadow=true;g.add(m);});
-    g.position.set(tx,topY(tx,tz),tz);g.scale.setScalar(.01);scene.add(g);a.P={g};
+    a.P={rod,bob,line,fish,bx,by,bz};
+  }else if(k==='read'){
+    const ti=Number.isInteger(o.ti)&&o.ti>=0&&o.ti<treeList.length?o.ti:nearestTree(e.x,e.z),tr=treeList[ti];a.ti=ti;
+    const ty=topY(tr.position.x,tr.position.z),seatY=ty+1.8+.3;a.rise=seatY-1.25-topY(e.x,e.z);
+    e.tyaw=e.yaw=0;
+    const x0=tr.position.x,x1=e.x+2.1,br=new THREE.Mesh(new THREE.CylinderGeometry(.3,.42,x1-x0,6),lmat(PAL.tree[3]));
+    br.rotation.z=Math.PI/2;br.position.set((x0+x1)/2,ty+1.8,(tr.position.z+e.z)/2);br.castShadow=true;br.scale.setScalar(.01);scene.add(br);
+    const book=new THREE.Group(),cover=new THREE.Mesh(new THREE.BoxGeometry(1.05,.78,.1),lmat('#c8463f')),pages=new THREE.Mesh(new THREE.BoxGeometry(.95,.7,.12),lmat('#fbf4e2'));
+    pages.position.z=.03;book.add(cover,pages);book.position.set(0,1.5,.72);book.rotation.x=-.45;book.scale.setScalar(.01);rig.g.add(book);
+    a.P={br,book};
+  }else{
+    const sd=o.sd===-1?-1:(o.sd===1?1:(inside(e.x+5,e.z,1.2)?1:-1));a.sd=sd;e.tyaw=e.yaw=sd*Math.PI/2;
+    a.P={};
   }
   e.act=a;
 }
 function endAct(e,done){
   const a=e.act;if(!a)return;
   const P=a.P;
-  if(P){
-    if(a.k==='fish'){e.rig.arms[1].remove(P.rod);P.rod.geometry.dispose();P.rod.material.dispose();scene.remove(P.g,P.bob,P.line,P.fish);P.bob.geometry.dispose();P.bob.material.dispose();P.line.geometry.dispose();P.line.material.dispose();disposeTree(P.fish);P.g.traverse(m=>{if(m.geometry)m.geometry.dispose();});}
-    else{scene.remove(P.g);disposeTree(P.g);}
-  }
-  if(a.k==='flip'&&done){const f=Math.sin(a.yaw0),z=Math.cos(a.yaw0),[nx,nz]=clampTarget(e.x+f*1.05,e.z+z*1.05);e.x=e.tx=nx;e.z=e.tz=nz;}
-  e.rig.root.rotation.x=0;e.cy=0;e.wink=false;e.act=null;
+  if(a.k==='fish'&&P){e.rig.arms[1].remove(P.rod);P.rod.geometry.dispose();P.rod.material.dispose();scene.remove(P.bob,P.line,P.fish);disposeObj(P.bob);disposeObj(P.line);disposeObj(P.fish);}
+  else if(a.k==='read'&&P){scene.remove(P.br);disposeObj(P.br);e.rig.g.remove(P.book);disposeObj(P.book);}
+  e.rig.root.rotation.x=0;e.cy=0;e.smile=0;e.act=null;
   if(e.mode==='act')e.mode='idle';
 }
 function actStep(e,dt){
@@ -926,8 +940,7 @@ function actStep(e,dt){
   if(t>=a.dur){endAct(e,true);return;}
   const c=e.rig,ar=c.arms,lg=c.legs,r=c.root,P=a.P,sc=r.scale.x;
   if(a.k==='fish'){
-    const s=a.sd,cast=easeIO(c01((t-.2)/.6));
-    P.g.scale.setScalar(Math.max(.01,t<.6?easeIO(t/.6):(t>a.dur-.8?easeIO(c01((a.dur-t)/.8)):1)));
+    const cast=easeIO(c01((t-.2)/.6));
     let armX;
     if(t<5.2)armX=-1.9*cast+.05*Math.sin(t*1.8)*cast;
     else if(t<5.9)armX=-1.9+.28*Math.sin((t-5.2)*28);
@@ -936,41 +949,40 @@ function actStep(e,dt){
     const reel=c01((t-5.9)/1.1);
     r.updateMatrixWorld(true);ar[1].localToWorld(_tp.set(0,-3.3,.05));
     const tx=_tp.x,ty=_tp.y,tz=_tp.z;
-    P.bob.position.y=P.py+.1+(t>5.2&&t<5.9?-.32*Math.sin((t-5.2)/.7*Math.PI):.05*Math.sin(t*3));
+    P.bob.position.y=P.by+(t>5.2&&t<5.9?-.4*Math.sin((t-5.2)/.7*Math.PI):.08*Math.sin(t*3));
     P.bob.visible=reel<=0;
     let fx,fy,fz;
     if(reel<=0){fx=P.bob.position.x;fy=P.bob.position.y;fz=P.bob.position.z;P.fish.visible=false;}
     else{
-      P.fish.visible=true;
-      if(t<7){const u=easeIO(reel);fx=P.bx+(tx-P.bx)*u;fz=P.pz+(tz-P.pz)*u;fy=P.py+.1+(ty-1.3-P.py-.1)*u+3.2*Math.sin(Math.PI*u);P.fish.rotation.z=.6*Math.sin(t*22);}
+      P.fish.visible=true;e.smile=.5;
+      if(t<7){const u=easeIO(reel);fx=P.bx+(tx-P.bx)*u;fz=P.bz+(tz-P.bz)*u;fy=P.by+(ty-1.3-P.by)*u+5*Math.sin(Math.PI*u);P.fish.rotation.z=.6*Math.sin(t*22);}
       else{fx=tx+.15*Math.sin(t*4);fy=ty-1.3;fz=tz;P.fish.rotation.z=.35*Math.sin(t*6);}
-      P.fish.position.set(fx,fy,fz);P.fish.rotation.y=s>0?0:Math.PI;
+      P.fish.position.set(fx,fy,fz);P.fish.rotation.y=Math.atan2(-a.n[1],a.n[0]);
     }
     const pa=P.line.geometry.attributes.position;pa.setXYZ(0,tx,ty,tz);pa.setXYZ(1,fx,fy,fz);pa.needsUpdate=true;
-  }else if(a.k==='flip'){
-    if(a.yaw0===undefined)a.yaw0=e.yaw;
-    const T0=.6,FL=.95,N=3,fx=Math.sin(a.yaw0),fz=Math.cos(a.yaw0),h=1.9*sc;
-    let phi=0,jy=0,fw=0,tuck=0;
-    if(t<T0){tuck=0;r.position.y-=.25*sc*Math.sin(t/T0*Math.PI);}
-    else if(t<T0+N*FL){const q=(t-T0)/FL,i=Math.floor(q),u=q-i;phi=(i+easeIO(u))*Math.PI*2;jy=1.5*sc*Math.sin(Math.PI*u);fw=(i+u)*.35;tuck=1;}
-    else{fw=N*.35;if(t<T0+N*FL+.15)r.position.y-=.2*sc;e.tyaw=0;}
-    if(tuck){ar[0].rotation.x=ar[1].rotation.x=-2.3;lg[0].rotation.x=lg[1].rotation.x=-1;c.head.rotation.x=.4;}
-    r.position.x+=fx*fw-fx*h*Math.sin(phi);r.position.z+=fz*fw-fz*h*Math.sin(phi);r.position.y+=h*(1-Math.cos(phi))+jy;r.rotation.x=phi;
-    if(t>3.9){e.wink=true;ar[1].rotation.x=-2.3;ar[1].rotation.z=.35+.2*Math.sin(t*9);if(!a.b&&t>4.1){a.b=true;spawnBubble(e,'✧',false,true);}}
-  }else{
-    const tr=P.g;tr.scale.setScalar(Math.max(.01,t<.7?easeIO(t/.7):(t>a.dur-.7?easeIO(c01((a.dur-t)/.7)):1)));
-    const CY=5.4;let cy=0,climbing=false;
-    if(t<.7)cy=0;
-    else if(t<3.4){cy=CY*easeIO((t-.7)/2.7);climbing=true;}
-    else if(t<8.6)cy=CY;
-    else if(t<11.3){cy=CY*(1-easeIO((t-8.6)/2.7));climbing=true;}
-    e.cy=cy;r.position.y+=cy;
-    if(climbing){const ph=t*7;ar[0].rotation.x=-2.6+.6*Math.sin(ph);ar[1].rotation.x=-2.6-.6*Math.sin(ph);lg[0].rotation.x=.55*Math.sin(ph+Math.PI);lg[1].rotation.x=.55*Math.sin(ph);}
-    else if(cy>=CY-.01){
-      const ph=c01((t-3.4)/5.2);
-      ar[1].rotation.x=-2.35;ar[1].rotation.z=.28;ar[0].rotation.x=-.5;ar[0].rotation.z=-.25;lg[0].rotation.x=.14;lg[1].rotation.x=-.14;
-      c.head.rotation.y=.9*Math.cos(ph*3*Math.PI);
+  }else if(a.k==='read'){
+    const hop=c01(t/.9),out=c01((t-(a.dur-1.2))/.9),up=easeIO(hop)*(1-easeIO(out));
+    const arc=(t<.9?Math.sin(Math.PI*hop):0)+(t>a.dur-1.2?Math.sin(Math.PI*out):0);
+    P.br.scale.setScalar(Math.max(.01,Math.min(easeIO(c01(t/.5)),1-easeIO(c01((t-(a.dur-.6))/.5)))));
+    r.position.y+=a.rise*up+1.1*sc*arc;e.cy=a.rise*up;
+    const bk=Math.min(easeIO(c01((t-.9)/.7)),1-easeIO(c01((t-(a.dur-1.8))/.6)));
+    P.book.scale.setScalar(Math.max(.01,bk));
+    if(up>.97){
+      lg[0].rotation.x=-.1+.4*Math.sin(t*1.8);lg[1].rotation.x=-.1+.4*Math.sin(t*1.8+Math.PI);
+      ar[0].rotation.x=ar[1].rotation.x=-1.1*bk;ar[0].rotation.z=ar[1].rotation.z=0;c.head.rotation.x=.38*bk+.04*Math.sin(t*1.3);
+      if(bk>.9&&((t*10)|0)%70===0)e.smile=0;
     }
+  }else{
+    const sd=a.sd,f=[sd,0],down=easeIO(c01(t/1.1)),up=easeIO(c01((t-(a.dur-1.3))/1.1)),am=down*(1-up);
+    r.rotation.x=-Math.PI/2*am;
+    r.position.y+=.62*sc*am;r.position.x+=f[0]*1.6*sc*am;
+    if(am>.05){
+      ar[0].rotation.x=ar[1].rotation.x=3.0*am;ar[0].rotation.z=.8*am;ar[1].rotation.z=-.8*am;
+      lg[0].rotation.x=0;lg[1].rotation.x=.25*Math.sin(t*2.2)*am;
+    }
+    e.smile=.5*am;
+    if(!a.b1&&t>2.4){a.b1=true;spawnBubble(e,'ㅎㅎ',false,true);}
+    if(!a.b2&&t>5.4){a.b2=true;spawnBubble(e,'하하',false,true);}
   }
 }
 function startHug(t,from){
@@ -1001,6 +1013,10 @@ function update(e,dt){
           net.send({t:'hug',id:me.id,to:g.id,x:e.x,z:e.z,r:e.tyaw});
           startHug(g,e);spawnBubble(e,'♡',false,true);
         }else toast('지금은 안아주기 어려워요.',1600);
+      }
+      if(e.go){
+        const go=e.go;e.go=null;
+        if(Math.hypot(e.x-go.x,e.z-go.z)<.4){startAct(e,go.k,go);if(e===me)net.send({t:'an',id:me.id,a:'act',k:go.k,x:e.x,z:e.z,ti:go.ti,sd:go.sd});}
       }
       if(e.join){const j=e.join;e.join=null;e.tyaw=j.yaw;e.joined=j.id;e.mode='sit';if(e===me)net.send({t:'an',id:me.id,a:'sit',j:j.id,x:e.x,z:e.z,r:e.tyaw});}
     }
@@ -1090,10 +1106,20 @@ $('b3').onclick=()=>{
 };
 let lastAct=-1;
 $('b4').onclick=()=>{
-  if(full||me.mode==='act')return;
+  if(full||me.mode==='act'||me.go)return;
   let i;do{i=Math.floor(Math.random()*ACTS.length);}while(i===lastAct);lastAct=i;
-  const fk=qp.get('act'),k=ACTS.includes(fk)?fk:ACTS[i];startAct(me,k);
-  net.send({t:'an',id:me.id,a:'act',k,sd:me.act&&me.act.sd,x:me.x,z:me.z});
+  const fk=qp.get('act'),k=ACTS.includes(fk)?fk:ACTS[i];
+  toast(ACT_MSG[k],4800);
+  let spot=null,extra={};
+  if(k==='fish')spot=edgeSpot(me.x,me.z);
+  else if(k==='read'){const ti=nearestTree(me.x,me.z),tr=treeList[ti];if(tr){spot=clampTarget(tr.position.x+2.5,tr.position.z+.2);extra={ti};}}
+  if(!spot){
+    if(k==='lie'){const sd=inside(me.x+5,me.z,1.2)?1:-1;startAct(me,'lie',{sd});net.send({t:'an',id:me.id,a:'act',k:'lie',x:me.x,z:me.z,sd});}
+    return;
+  }
+  me.go=Object.assign({k,x:spot[0],z:spot[1]},extra);
+  me.tx=spot[0];me.tz=spot[1];me.pending=null;me.join=null;me.hug=null;me.joined=null;me.mode='walk';
+  net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:spot[0],tz:spot[1],r:me.yaw});
 };
 $('txt').addEventListener('input',()=>{$('cnt').textContent=$('txt').value.length+'/50';$('err').textContent='';});
 $('cancel').onclick=()=>$('modal').classList.remove('on');
