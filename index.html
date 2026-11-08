@@ -983,7 +983,7 @@ function startAct(e,k,o){
     e.tyaw=e.yaw=Math.atan2(-VDX,-VDZ);
     const pm=new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.4,depthWrite:false});
     const puffs=[0,1,2].map(()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1,6,5),pm.clone());m.visible=false;scene.add(m);return m;});pm.dispose();
-    const gy=topY(e.x,e.z),pad=k==='yoga'?new THREE.Mesh(new THREE.BoxGeometry(2.5,.08,4.8),lmat('#8b6fd6')):new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.4,.34,14),lmat('#e59aa8'));
+    const gy=topY(e.x,e.z),pad=k==='yoga'?new THREE.Mesh(new THREE.BoxGeometry(2.5,.08,4.8),lmat('#6b7a3a')):new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.4,.34,14),lmat('#6b7a3a'));
     pad.position.set(e.x,gy+(k==='yoga'?.05:.17),e.z);pad.rotation.y=e.yaw;pad.receiveShadow=true;pad.scale.setScalar(.01);scene.add(pad);
     a.P={pad,puffs};
   }else if(k==='sleep'){
