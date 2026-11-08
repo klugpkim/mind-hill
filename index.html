@@ -385,7 +385,7 @@ function makeTree(sc,seed){
   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.32,1.5,6),lm(PAL.tree[3]));trunk.position.y=.75;trunk.castShadow=true;grp.add(trunk);
   [[1.9,2.7,2.3,0],[1.5,2.4,3.7,1],[1.05,2.1,5,2]].forEach(([r,h,y,k])=>{
     const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,1),lm(new THREE.Color(PAL.tree[Math.min(k,1)]).lerp(new THREE.Color('#ffffff'),k*.08)));m.position.y=y;m.rotation.y=seed+k;m.castShadow=true;grp.add(m);});
-  grp.scale.setScalar(sc);return grp;
+  grp.scale.set(sc,sc*1.55,sc);return grp;
 }
 function addTree(x,z,sc,seed){[x,z]=clampTarget(x,z);const t=makeTree(sc,seed);t.position.set(x,topY(x,z),z);scene.add(t);return t;}
 addTree(-10.5,-6.4,1.5,3);addTree(12.5,-2,1.1,12);addTree(-24,-16,1.25,31);addTree(-30,-9,1,41);addTree(6,-14,1,43);addTree(-2,-24,1.15,47);
@@ -396,8 +396,34 @@ function lowRock(s,seed,col,k){
   const m=new THREE.Mesh(g,vcMat);m.scale.set(s*1.3,s*.8,s);m.rotation.y=seed;m.castShadow=m.receiveShadow=true;return m;
 }
 function addRock(x,z,s,seed){[x,z]=clampTarget(x,z);const m=lowRock(s,seed,new THREE.Color(PAL.rock[2]).lerp(new THREE.Color(PAL.rock[1]),.35));m.position.set(x,topY(x,z)+s*.3,z);scene.add(m);}
-addRock(2.5,-3,1.1,2);addRock(-7,2.5,.9,6);addRock(5.5,-7,.9,9);addRock(-18,1,1,11);addRock(-22,-8,1.1,13);addRock(14,0,.8,17);addRock(0,-22,1.1,23);
-for(let i=0;i<BASEPTS.length;i+=3){
+addRock(2.5,-3,1.1,2);addRock(-18,1,1,11);addRock(0,-22,1.1,23);
+function addLog(x,z,yaw,len){
+  [x,z]=clampTarget(x,z);
+  const geo=new THREE.CylinderGeometry(.9,1.02,len,6,3),p=geo.attributes.position;geo.rotateZ(Math.PI/2);
+  for(let i=0;i<p.count;i++){const vx=p.getX(i),vy=p.getY(i),vz=p.getZ(i),n=1+(hsh(vx*3+len,vz*3+vy*2)-.5)*.22;p.setXYZ(i,vx,vy*n,vz*n);}
+  const wood=new THREE.Color(PAL.tree[3]),moss=new THREE.Color(PAL.grass[1]),cut=new THREE.Color('#d8a56e');
+  const g=flatPaint(geo,(c,cx,cy,cz,ny,f)=>{
+    if(Math.abs(cx)>len/2-.05)c.copy(cut);
+    else if(ny>.35&&hsh(cx*1.7+f*.01,3+len)>.38)c.copy(moss).multiplyScalar(.9+hsh(f,4)*.2);
+    else c.copy(wood).multiplyScalar(.85+hsh(f*.7,9)*.3);
+  });
+  const m=new THREE.Mesh(g,lamb);m.position.set(x,topY(x,z)+.7,z);m.rotation.set(0,yaw,(hsh(x,z)-.5)*.1);m.castShadow=m.receiveShadow=true;scene.add(m);
+}
+addLog(-14,-4,.5,5.6);addLog(7,-9,2.3,4.8);addLog(-27,-13,1.2,6);addLog(4,-19,.2,5);
+{
+  const R=mulberry32(21),centers=[];
+  while(centers.length<14){const x=-44+R()*70,z=-40+R()*46;if(inside(x,z,2.5))centers.push([x,z]);}
+  const per=7,im=new THREE.InstancedMesh(new THREE.ConeGeometry(.3,1,3,1).translate(0,.5,0),new THREE.MeshLambertMaterial({flatShading:true}),centers.length*per);
+  const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),col=new THREE.Color(),v=new THREE.Vector3(),sv=new THREE.Vector3();
+  let n=0;
+  for(const [cx,cz] of centers)for(let k=0;k<per;k++){
+    const a=R()*6.283,r=R()*.35,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
+    e.set(.25+R()*.45,a,0,'YXZ');q.setFromEuler(e);v.set(x,topY(x,z)-.05,z);sv.set(1,1.3+R()*1.4,1.4);
+    m4.compose(v,q,sv);im.setMatrixAt(n,m4);col.set(tri(PAL.grass,.55+R()*.4));im.setColorAt(n,col);n++;
+  }
+  im.receiveShadow=true;scene.add(im);
+}
+for(let i=0;i<BASEPTS.length;i+=6){
   const bp=BASEPTS[i],m=lowRock(rnd(.9,1.8),i,new THREE.Color(PAL.rock[1]).multiplyScalar(.8));m.position.set(bp.x+bp.nx*.3,WATER+.2,bp.z+bp.nz*.3);scene.add(m);
 }
 
@@ -729,7 +755,7 @@ function update(e,dt){
     else e.mode='idle';
   }
   e.yaw+=angDiff(e.yaw,e.tyaw)*Math.min(1,dt*10);
-  const r=e.rig.root;r.position.set(e.x,topY(e.x,e.z),e.z);r.rotation.y=e.yaw;r.scale.setScalar(1.65*(e.look.scale||1)*CHARBOOST);
+  const r=e.rig.root;r.position.set(e.x,topY(e.x,e.z),e.z);r.rotation.y=e.yaw;r.scale.setScalar(1.65*(e.look.scale||1)*CHARBOOST*clamp(_cd2.copy(r.position).sub(camera.position).dot(_cd)/REFD,.7,1.4));
   animChar(e,dt);
 }
 
@@ -777,14 +803,14 @@ $('send').onclick=submit;
 $('txt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();submit();}});
 
 /* ---------- 카메라 / 리사이즈 ---------- */
-let PORTRAIT=false,CHARBOOST=1;const camBase=new THREE.Vector3(),camOff=new THREE.Vector3(),tgtTmp=new THREE.Vector3();
+let PORTRAIT=false,CHARBOOST=1,REFD=87;const _cd=new THREE.Vector3(),_cd2=new THREE.Vector3();const camBase=new THREE.Vector3(),camOff=new THREE.Vector3(),tgtTmp=new THREE.Vector3();
 function resize(){
   const w=VW(),h=VH(),asp=w/h;PORTRAIT=asp<.9;
   renderer.setSize(w,h,false);
   const shift=PORTRAIT?.12:.3,k=PORTRAIT?1:Math.max(1,1.36/asp);
   camera.fov=PORTRAIT?62:46;
   camBase.copy(CAM_TARGET).add(CAM_BASE.clone().sub(CAM_TARGET).multiplyScalar(k));
-  camera.position.copy(camBase);camera.lookAt(CAM_TARGET);
+  camera.position.copy(camBase);camera.lookAt(CAM_TARGET);REFD=camBase.distanceTo(CAM_TARGET)*.95;
   camera.aspect=w/(h*(1+shift));camera.setViewOffset(w,h*(1+shift),0,0,w,h);camera.updateProjectionMatrix();
   CHARBOOST=PORTRAIT?1+(.9-asp)*.35:(h<520?1.35:1);
   UK=PORTRAIT?1:clamp(w/960,.75,1.4);bubLayer.style.setProperty('--k',UK);namesLayer.style.setProperty('--k',UK);
@@ -804,6 +830,7 @@ function frame(now){
     else if(avg<15&&dpr<MAXDPR){if(++perfOK>=4){perfOK=0;dpr=Math.min(MAXDPR,dpr+.1);renderer.setPixelRatio(dpr);renderer.setSize(VW(),VH(),false);}}
     else perfOK=0;}}
   if(PORTRAIT&&!qp.has('closeup')){const dx=clamp((me.x+4)*.8,-22,12),dz=clamp((me.z+8)*.5,-22,3),k=Math.min(1,dt*3);camOff.x+=(dx-camOff.x)*k;camOff.z+=(dz-camOff.z)*k;camera.position.copy(camBase).add(camOff);tgtTmp.copy(CAM_TARGET).add(camOff);camera.lookAt(tgtTmp);}
+  camera.getWorldDirection(_cd);
   update(me,dt);for(const p of peers.values())update(p,dt);
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
