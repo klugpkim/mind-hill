@@ -395,7 +395,7 @@ function spot(margin){
   for(let k=0;k<250;k++){const x=-46+R7()*76,z=-42+R7()*54;if(!inside(x,z,margin))continue;let d=1e9;for(const q of placed)d=Math.min(d,Math.hypot(x-q[0],z-q[1]));if(d>bd){bd=d;best=[x,z];}}
   if(!best)best=[-8,-15];placed.push(best);return best;
 }
-for(let i=0;i<5;i++){const [x,z]=spot(3.5);addTree(x,z,.95+R7()*.5,i*7+3);}
+for(let i=0;i<3;i++){const [x,z]=spot(3.5);addTree(x,z,.95+R7()*.5,i*7+3);}
 function lowRock(s,seed,col,k){
   const geo=new THREE.IcosahedronGeometry(1,0),p=geo.attributes.position;
   for(let i=0;i<p.count;i++){const vx=p.getX(i),vy=p.getY(i),vz=p.getZ(i),n=1+(hsh(vx*4+seed,vz*4+vy*3)-.5)*.35;p.setXYZ(i,vx*n,vy*n,vz*n);}
@@ -419,7 +419,7 @@ function addLog(x,z,yaw,len){
 for(let i=0;i<2;i++){const [x,z]=spot(4);addLog(x,z,R7()*3.14,4.6+R7()*1.4);}
 {
   const R=mulberry32(21),centers=[];
-  while(centers.length<16)centers.push(spot(2.5));
+  while(centers.length<6)centers.push(spot(2.5));
   const per=7,im=new THREE.InstancedMesh(new THREE.ConeGeometry(.3,1,3,1).translate(0,.5,0),new THREE.MeshLambertMaterial({flatShading:true}),centers.length*per);
   const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),col=new THREE.Color(),v=new THREE.Vector3(),sv=new THREE.Vector3();
   let n=0;
@@ -683,7 +683,7 @@ const net=(()=>{
   };
 })();
 const hello=()=>({t:'hi',id:me.id,look:LOOKS.indexOf(me.look),nm:me.nm,x:me.x,z:me.z,tx:me.tx,tz:me.tz,r:me.yaw,mode:me.mode});
-function removePeer(id){const p=peers.get(id);if(p){scene.remove(p.rig.root);p.label.remove();peers.delete(id);}}
+function removePeer(id){const p=peers.get(id);if(p){if(p.fire)scene.remove(p.fire.g);scene.remove(p.rig.root);p.label.remove();peers.delete(id);}}
 function getPeer(m){
   let p=peers.get(m.id);
   if(!p){if(peers.size>=MAX_ROOM-1)return null;p=mk(m.id,LOOKS[m.look|0]||LOOKS[0],-4,0,validNm(m.nm));peers.set(m.id,p);}
@@ -745,6 +745,42 @@ function spawnBubble(e,text,scream,local){
   bubbles.push({el,x:sx,y:sy,vx:rnd(55,80)*UK,vy:-rnd(22,36)*UK,t:0,seed:Math.random()*6});
 }
 
+/* ---------- 명상 모닥불 (로우폴리) ---------- */
+const fireLight=new THREE.PointLight('#ff9a3c',0,22,2);scene.add(fireLight);let fireOwner=null;
+const glowSprTex=new THREE.CanvasTexture(glowTex(255,150,50)),flameMat=new THREE.MeshBasicMaterial({vertexColors:true});
+const fireWood=new THREE.MeshLambertMaterial({color:new THREE.Color(PAL.tree[3]).multiplyScalar(.9),flatShading:true});
+const logGeo=new THREE.BoxGeometry(.32,2.1,.32),flatLogGeo=new THREE.BoxGeometry(2.4,.32,.32);
+function flameGeo(r,h,seed){
+  const g=new THREE.ConeGeometry(r,h,5,4).translate(0,h/2,0),p=g.attributes.position;
+  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),k=1-y/h,j=(hsh(x*5+seed,z*5+y*3)-.5)*.5*r*k;p.setXYZ(i,x+j+Math.sin(y*1.7+seed)*.18*r,y,z+j);}
+  const lo=new THREE.Color('#ff6a14'),hi=new THREE.Color('#ffe640');
+  return lowPolyColor(g,(c,cy,ny,i)=>{c.copy(lo).lerp(hi,clamp(cy/h*1.1+(hsh(i*.37,seed)-.5)*.35,0,1));});
+}
+function makeFire(x,z){
+  const g=new THREE.Group(),flames=[];
+  for(let k=0;k<6;k++){const a=k/6*Math.PI*2+.3,m=new THREE.Mesh(logGeo,fireWood);m.position.set(Math.cos(a)*.62,.95,Math.sin(a)*.62);m.rotation.set(-Math.sin(a)*.5,0,Math.cos(a)*.5);m.castShadow=true;g.add(m);}
+  for(let k=0;k<2;k++){const m=new THREE.Mesh(flatLogGeo,fireWood);m.position.y=.2;m.rotation.y=k*1.5+.4;m.castShadow=true;g.add(m);}
+  [[1,3.3,0,0,1],[.75,2.4,-.5,.2,2],[.8,2.6,.5,-.2,3],[.55,1.9,.1,.55,4]].forEach(([r,h,fx,fz,sd],i)=>{
+    const m=new THREE.Mesh(flameGeo(r,h,sd),flameMat);m.position.set(fx,.35,fz);m.rotation.y=sd;m.userData.ph=i*1.7;g.add(m);flames.push(m);});
+  const gl=new THREE.Sprite(new THREE.SpriteMaterial({map:glowSprTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,opacity:.7}));gl.scale.set(8,5,1);gl.position.y=.5;g.add(gl);
+  g.position.set(x,topY(x,z),z);scene.add(g);return {g,flames,gl};
+}
+function fireStep(e,dt){
+  if(e.mode==='sit'){
+    if(!e.fire){const [fx,fz]=clampTarget(e.x+3.9,e.z-2.2);e.fire=makeFire(fx,fz);e.fk=0;}
+    e.fk=Math.min(1,e.fk+dt*1.8);
+  }else if(e.fire){
+    e.fk=Math.max(0,e.fk-dt*2.4);
+    if(e.fk<=0){scene.remove(e.fire.g);e.fire.g.traverse(o=>{if(o.geometry&&o.isMesh&&o.geometry!==logGeo&&o.geometry!==flatLogGeo)o.geometry.dispose();});if(fireOwner===e){fireLight.intensity=0;fireOwner=null;}e.fire=null;return;}
+  }
+  const f=e.fire;if(!f)return;
+  const t=performance.now()/1000,k=e.fk,ease=k*k*(3-2*k);
+  f.g.scale.setScalar(2.1*(.15+.85*ease));
+  f.flames.forEach((m,i)=>{m.scale.set(1+.07*Math.sin(t*7+i),1+.15*Math.sin(t*9+m.userData.ph)+.07*Math.sin(t*15+i),1+.07*Math.cos(t*8+i));m.rotation.y+=dt*.8;});
+  f.gl.material.opacity=.65*ease*(.85+.15*Math.sin(t*11));
+  if(e===me){fireOwner=me;fireLight.position.set(f.g.position.x,f.g.position.y+3,f.g.position.z);fireLight.intensity=ease*(160+30*Math.sin(t*10));}
+}
+
 /* ---------- 업데이트 ---------- */
 function fireBubble(e,text,scream,local){
   spawnBubble(e,text,scream,local);
@@ -763,7 +799,7 @@ function update(e,dt){
   }
   e.yaw+=angDiff(e.yaw,e.tyaw)*Math.min(1,dt*10);
   const r=e.rig.root;r.position.set(e.x,topY(e.x,e.z),e.z);r.rotation.y=e.yaw;r.scale.setScalar(1.65*(e.look.scale||1)*CHARBOOST*clamp(_cd2.copy(r.position).sub(camera.position).dot(_cd)/REFD,.7,1.4));
-  animChar(e,dt);
+  animChar(e,dt);fireStep(e,dt);
 }
 
 /* ---------- 입력 / UI ---------- */
