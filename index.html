@@ -923,7 +923,7 @@ function fireBubble(e,text,scream,local){
 }
 /* ---------- 스트레스풀기: 낚시 / 나무 위 독서 / 누워서 하늘 보기 ---------- */
 const ACTS=['fish','tea','lie','seed'],ACT_DUR={fish:9.6,tea:11.4,lie:9.8,seed:12};
-const ACT_FOOT={tea:[[3.7,-1.3]],lie:[[-3.2,0],[3.2,0]],seed:[[2.8,0],[-2.8,0]]};
+const ACT_FOOT={tea:[[3.7,-1.3]],lie:[[-3.2,0],[3.2,0]],seed:[[3,1.5],[4.5,.6],[-3,0]]};
 const flowers=[];
 const FLC=[['#ff8fb1','#ffe27a'],['#ffffff','#ffd24d'],['#b79bff','#fff2a8'],['#ffb36b','#fff6c4']];
 const ACT_MSG={fish:'스트레스를 풀기위해 낚시를 하고 있어요.',tea:'스트레스를 풀기위해 따듯한 차를 마시고 있어요',lie:'스트레스를 풀기위해 하늘을 바라보고 있어요',seed:'스트레스를 풀기위해 씨앗을 심고 있어요'};
@@ -976,10 +976,10 @@ function startAct(e,k,o){
     const pm=new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.4,depthWrite:false}),puffs=[0,1,2].map(()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1,6,5),pm.clone());m.visible=false;scene.add(m);return m;});
     a.P={ch,mug,puffs};
   }else if(k==='seed'){
-    const sd=o.sd===-1?-1:(o.sd===1?1:(inside(e.x+6,e.z,1.5)?1:-1));a.sd=sd;e.tyaw=e.yaw=sd*Math.PI/2;
-    const hx=e.x+sd*2.7,hz=e.z,hy=topY(hx,hz),dirt=lmat('#6e4b2e');
+    const fx=-VDX,fz=-VDZ,hx=e.x+fx*2.7+fz*1.9,hz=e.z+fz*2.7-fx*1.9;e.tyaw=e.yaw=Math.atan2(hx-e.x,hz-e.z);
+    const hy=topY(hx,hz),dirt=lmat('#6e4b2e'),ppx=fz*1.7,ppz=-fx*1.7;
     const hole=new THREE.Mesh(new THREE.CircleGeometry(1,12),new THREE.MeshBasicMaterial({color:'#2e1f12'}));hole.rotation.x=-Math.PI/2;hole.position.set(hx,hy+.07,hz);hole.scale.setScalar(.01);scene.add(hole);
-    const pile=new THREE.Mesh(new THREE.SphereGeometry(1,8,5,0,Math.PI*2,0,Math.PI/2),dirt);pile.position.set(hx,hy,hz+1.7);pile.scale.setScalar(.01);pile.castShadow=true;scene.add(pile);
+    const pile=new THREE.Mesh(new THREE.SphereGeometry(1,8,5,0,Math.PI*2,0,Math.PI/2),dirt);pile.position.set(hx+ppx,hy,hz+ppz);pile.scale.setScalar(.01);pile.castShadow=true;scene.add(pile);
     const shovel=new THREE.Group(),hd=new THREE.Mesh(new THREE.CylinderGeometry(.045,.05,.8,6),lmat('#9a6a42')),gr=new THREE.Mesh(new THREE.SphereGeometry(.09,6,5),lmat('#7a5030')),fe=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.12,6),lmat('#9aa3aa')),bl=new THREE.Mesh(new THREE.ConeGeometry(.3,.62,4),lmat('#c4ccd2'));
     hd.position.y=-.4;gr.position.y=.02;fe.position.y=-.86;bl.rotation.x=Math.PI;bl.scale.z=.22;bl.position.y=-1.22;bl.rotation.y=Math.PI/4;shovel.add(hd,gr,fe,bl);shovel.position.set(0,-.72,.1);rig.arms[1].add(shovel);
     const seed=new THREE.Mesh(new THREE.SphereGeometry(.15,6,5),lmat('#f1e0a0'));seed.visible=false;scene.add(seed);
@@ -989,7 +989,7 @@ function startAct(e,k,o){
     const core=new THREE.Mesh(new THREE.SphereGeometry(.24,8,6),lmat(cc));blossom.add(core);
     for(let i=0;i<7;i++){const an=i/7*Math.PI*2,pt=new THREE.Mesh(new THREE.SphereGeometry(1,6,4),lmat(pc));pt.scale.set(.3,.1,.17);pt.position.set(Math.cos(an)*.38,0,Math.sin(an)*.38);pt.rotation.y=-an;blossom.add(pt);}
     blossom.rotation.x=-.35;fg.add(stem,blossom);fg.position.set(hx,hy+.15,hz);fg.scale.setScalar(.01);scene.add(fg);
-    a.P={hole,pile,shovel,seed,fg,stem,blossom,lf,hx,hy,hz};
+    a.P={hole,pile,shovel,seed,fg,stem,blossom,lf,hx,hy,hz,ppx,ppz};
   }else{
     const sd=o.sd===-1?-1:(o.sd===1?1:(inside(e.x+5,e.z,1.2)?1:-1));a.sd=sd;e.tyaw=e.yaw=sd*Math.PI/2;
     a.P={};
@@ -1012,7 +1012,7 @@ function endAct(e,done){
 function actStep(e,dt){
   const a=e.act;if(!a)return;
   if(e.mode!=='act'){endAct(e,false);return;}
-  a.t+=dt;const t=a.t;
+  a.t+=dt*1.25;const t=a.t;
   if(t>=a.dur){endAct(e,true);return;}
   const c=e.rig,ar=c.arms,lg=c.legs,r=c.root,P=a.P,sc=r.scale.x;
   if(a.k==='fish'){
@@ -1057,15 +1057,16 @@ function actStep(e,dt){
     const dig=c01((t-.6)/.3)*(1-c01((t-3.1)/.3)),cov=c01((t-4.5)/.3)*(1-c01((t-6.0)/.3));
     const hs=easeIO(c01((t-.8)/2.2))*(1-easeIO(c01((t-4.6)/1.4))),g1=easeIO(c01((t-.8)/2.2)),g2=easeIO(c01((t-4.6)/1.4));
     P.hole.scale.setScalar(Math.max(.01,.95*hs));
-    P.pile.position.set(P.hx,P.hy,P.hz+1.7*(1-g2));P.pile.scale.set(Math.max(.01,1.0*g1*(1-g2)+.95*g2),Math.max(.01,.55*g1*(1-g2)+.32*g2),Math.max(.01,1.0*g1*(1-g2)+.95*g2));
+    P.pile.position.set(P.hx+P.ppx*(1-g2),P.hy,P.hz+P.ppz*(1-g2));P.pile.scale.set(Math.max(.01,1.0*g1*(1-g2)+.95*g2),Math.max(.01,.55*g1*(1-g2)+.32*g2),Math.max(.01,1.0*g1*(1-g2)+.95*g2));
     const ph=t*7;
     const work=Math.max(dig,cov),armX=-1.35+.45*Math.sin(ph)*work;
     ar[1].rotation.x=armX;ar[1].rotation.z=0;P.shovel.rotation.x=-armX-.55+.3*Math.sin(ph)*work;c.g.position.y+=.08*Math.sin(ph)*work;
     ar[0].rotation.x=-1.1+.25*Math.sin(ph+1)*Math.max(dig,cov);ar[0].rotation.z=0;
     if(t>3.2&&t<4.5){ar[0].rotation.x=-1.85;}
+    P.shovel.visible=t<6.4;
     const su=c01((t-3.3)/1.0);P.seed.visible=t>3.3&&t<4.4;if(P.seed.visible)P.seed.position.set(P.hx,P.hy+2.4*(1-easeIO(su))+.1,P.hz);
     const gh=easeIO(c01((t-6.9)/2.2)),H=2.6*gh,bl=easeIO(c01((t-8.8)/1.2));
-    P.fg.scale.setScalar(t>6.9?1:.01);
+    P.fg.scale.setScalar(t>6.9?1.3:.01);
     P.stem.scale.set(1,Math.max(.01,H),1);P.stem.position.y=H/2;
     P.lf.forEach(l=>{l.position.set(l.userData.sx*.35*gh,H*.45,0);l.scale.set(.5*gh+.001,.08,.2*gh+.001);l.rotation.z=l.userData.sx*-.5;});
     P.blossom.position.y=H;P.blossom.scale.setScalar(Math.max(.01,bl));
