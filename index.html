@@ -49,8 +49,6 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #join.hug{background:linear-gradient(135deg,rgba(255,150,170,.4),rgba(255,255,255,.1))}
 #join svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 @keyframes jpop{from{opacity:0}to{opacity:1}}
-#bar #b4{display:none}
-body.pv #bar #b4{display:flex}
 #turn{position:absolute;z-index:3;display:flex;gap:8px;right:calc((100% - var(--navw)) / 2 + 14px);bottom:calc(var(--nav) + 40px + env(safe-area-inset-bottom))}
 #turn button{width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
 #turn button:hover,#turn button:active{opacity:.95;background:rgba(255,255,255,.22)}
@@ -1090,7 +1088,6 @@ $('b3').onclick=()=>{
   if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});toast('다시 일어났어요.',1200);return;}
   startAnim('sit',null);toast('잠시 앉아서 풍경을 바라봐요. 바닥을 누르면 다시 걸어요.',2800);
 };
-if(qp.has('preview'))document.body.classList.add('pv');
 let lastAct=-1;
 $('b4').onclick=()=>{
   if(full||me.mode==='act')return;
