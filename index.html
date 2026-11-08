@@ -2,12 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-visual">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#1b4f93">
 <title>마음 날리는 언덕</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overscroll-behavior:none;background:#1b4f93;color:#fff;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
-#stage{position:fixed;inset:0;overflow:hidden}
+html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulation;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;background:#1b4f93;color:#fff;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+#stage{position:fixed;inset:0;overflow:hidden;touch-action:none}
 #stage canvas#c{display:block;width:100%;height:100%;touch-action:manipulation;cursor:pointer}
 #paper{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:multiply;opacity:.05;z-index:1}
 #vig{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 55%,rgba(10,20,40,.28) 100%)}
@@ -55,6 +56,12 @@ html,body{margin:0;height:100%;overscroll-behavior:none;background:#1b4f93;color
 @media (max-height:520px){:root{--nav:62px}#bar{padding:5px 6px;width:min(420px,calc(100% - 24px));bottom:calc(8px + env(safe-area-inset-bottom))}#bar .btn{flex-direction:row;gap:6px;font-size:12px;padding:5px 4px}#bar .btn svg{width:18px;height:18px}#info,#credit{font-size:11px;bottom:calc(var(--nav) - 2px + env(safe-area-inset-bottom))}#hint{font-size:12.5px;top:calc(8px + env(safe-area-inset-top))}#toast{font-size:13px;bottom:calc(var(--nav) + 6px + env(safe-area-inset-bottom))}}
 @media (min-width:1500px){#info,#credit{font-size:15px}#hint{font-size:17px}#toast{font-size:17px}#bar{width:620px}}
 </style>
+<script>
+(function(){function show(m){var l=document.getElementById('loading');if(!l||l.dataset.err)return;l.dataset.err=1;l.innerHTML='<div style="text-align:center;line-height:1.6">풍경을 불러오지 못했어요.<br>새로고침 해주세요.<small style="opacity:.6;font-size:11px;word-break:break-all;display:block;margin-top:10px;padding:0 20px">'+String(m).slice(0,160).replace(/</g,'&lt;')+'</small></div>';}
+addEventListener('error',function(e){show(e.message||'error');});addEventListener('unhandledrejection',function(e){show(e.reason&&e.reason.message||e.reason);});
+window.__showErr=show;})();
+</script>
+<script nomodule>window.__showErr&&window.__showErr('지원하지 않는 브라우저예요. 최신 Safari/Chrome으로 열어주세요.');</script>
 <script src="./supabase.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
 </head>
@@ -721,7 +728,8 @@ addEventListener('pagehide',()=>{if(!full)net.send({t:'bye',id:me.id});});
 /* ---------- 말풍선 (DOM 글라스, 3D 위치에서 시작) ---------- */
 let UK=1;
 const _v=new THREE.Vector3();
-function toScreen(x,y,z){_v.set(x,y,z).project(camera);return [(_v.x*.5+.5)*innerWidth,(-_v.y*.5+.5)*innerHeight];}
+const VW=()=>stage.clientWidth||innerWidth,VH=()=>stage.clientHeight||innerHeight;
+function toScreen(x,y,z){_v.set(x,y,z).project(camera);return [(_v.x*.5+.5)*VW(),(-_v.y*.5+.5)*VH()];}
 function spawnBubble(e,text,scream,local){
   if(bubbles.length>=30){bubbles.shift().el.remove();}
   const [sx,sy]=toScreen(e.x,topY(e.x,e.z)+3.6,e.z),el=document.createElement('div');
@@ -756,7 +764,7 @@ function update(e,dt){
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
 renderer.domElement.addEventListener('pointerdown',ev=>{
   if(full)return;
-  ndc.set(ev.clientX/innerWidth*2-1,-(ev.clientY/innerHeight)*2+1);ray.setFromCamera(ndc,camera);
+  ndc.set(ev.clientX/VW()*2-1,-(ev.clientY/VH())*2+1);ray.setFromCamera(ndc,camera);
   if(!ray.ray.intersectPlane(plane,hit))return;
   const [x,z]=clampTarget(hit.x,hit.z);
   me.tx=x;me.tz=z;me.pending=null;me.mode='walk';
@@ -801,7 +809,7 @@ $('txt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isCo
 /* ---------- 카메라 / 리사이즈 ---------- */
 let PORTRAIT=false,CHARBOOST=1;const camBase=new THREE.Vector3(),camOff=new THREE.Vector3(),tgtTmp=new THREE.Vector3();
 function resize(){
-  const w=innerWidth,h=innerHeight,asp=w/h;PORTRAIT=asp<.9;
+  const w=VW(),h=VH(),asp=w/h;PORTRAIT=asp<.9;
   renderer.setSize(w,h,false);
   const shift=PORTRAIT?.12:.3,k=PORTRAIT?1:Math.max(1,1.36/asp);
   camera.fov=PORTRAIT?62:46;
@@ -811,7 +819,11 @@ function resize(){
   CHARBOOST=PORTRAIT?1+(.9-asp)*.35:(h<520?1.35:1);
   UK=PORTRAIT?1:clamp(w/960,.75,1.4);bubLayer.style.setProperty('--k',UK);namesLayer.style.setProperty('--k',UK);
 }
-addEventListener('resize',resize);resize();
+let _rw=0;
+const onResize=()=>{if($('modal').classList.contains('on')&&VW()===_rw)return;_rw=VW();resize();};
+addEventListener('resize',onResize);addEventListener('orientationchange',()=>setTimeout(onResize,250));resize();_rw=VW();
+for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventListener(ev,e=>e.preventDefault());
+(()=>{const vv=window.visualViewport,m=$('modal');if(!vv)return;const f=()=>{if(m.classList.contains('on')){m.style.top=vv.offsetTop+'px';m.style.height=vv.height+'px';m.style.bottom='auto';}else{m.style.top='';m.style.height='';m.style.bottom='';}};vv.addEventListener('resize',f);vv.addEventListener('scroll',f);new MutationObserver(f).observe(m,{attributes:true,attributeFilter:['class']});})();
 
 /* ---------- 메인 루프 ---------- */
 let last=performance.now(),acc=0,T=0;
