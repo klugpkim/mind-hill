@@ -3,8 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-visual">
-<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#1b4f93">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="마음언덕"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#1b4f93">
 <title>마음 날리는 언덕</title>
+<meta name="description" content="누구에게도 말할 수 없는 고민을 털어놓고, 말풍선에 담아 날려 보내는 온라인 언덕.">
+<meta property="og:type" content="website"><meta property="og:locale" content="ko_KR"><meta property="og:title" content="마음 날리는 언덕"><meta property="og:description" content="누구에게도 말할 수 없는 고민을 털어놓고, 말풍선에 담아 날려 보내는 온라인 언덕."><meta property="og:image" content="https://mindhill.vercel.app/og.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="icon" href="./favicon-32.png" sizes="32x32" type="image/png"><link rel="alternate icon" href="./favicon.ico"><link rel="apple-touch-icon" href="./apple-touch-icon.png"><link rel="manifest" href="./manifest.webmanifest">
+<link rel="preconnect" href="https://eayxuohlyqznxkrkepsp.supabase.co" crossorigin>
+<link rel="modulepreload" href="./three.module.js"><link rel="modulepreload" href="./three.core.js">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+Hei+HK:wght@300;400;500&display=swap">
 <style>
@@ -65,7 +70,7 @@ addEventListener('error',function(e){show(e.message||'error');});addEventListene
 window.__showErr=show;})();
 </script>
 <script nomodule>window.__showErr&&window.__showErr('지원하지 않는 브라우저예요. 최신 Safari/Chrome으로 열어주세요.');</script>
-<script src="./supabase.js"></script>
+<script defer src="./supabase.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
 </head>
 <body>
@@ -274,7 +279,7 @@ function glowTex(r,g,b){
 /* ---------- Three.js 기본 ---------- */
 const LOW=matchMedia('(pointer:coarse)').matches||Math.min(innerWidth,innerHeight)<700;
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,LOW?1.5:2));
+const MAXDPR=Math.min(devicePixelRatio||1,LOW?1.5:2);let dpr=MAXDPR,perfN=0,perfSum=0,perfOK=0;renderer.setPixelRatio(dpr);
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.domElement.id='c';stage.prepend(renderer.domElement);
 const scene=new THREE.Scene();
@@ -654,29 +659,36 @@ const peers=new Map();
 const bubbles=[];
 let full=false;const heard=new Set();
 const SB_URL='https://eayxuohlyqznxkrkepsp.supabase.co',SB_KEY='sb_publishable_8Rf0JIeEmhXHWfDpRehuxA_DxGDJxPl';
-const joinT=Date.now();
+const joinT=Date.now(),MAX_ROOMS=6;let roomNo=0;
 function setFull(){if(full)return;full=true;net.close();$('full').style.display='flex';for(const id of ['b1','b2','b3'])$(id).disabled=true;}
 const net=(()=>{
   let h=()=>{},ready=()=>{},ch=null,sb=null,live=false,bc=null;
+  function open(){
+    live=false;const c=ch=sb.channel('mind-hill-room-'+roomNo,{config:{broadcast:{self:false},presence:{key:me.id}}});
+    c.on('broadcast',{event:'m'},e=>{if(c===ch)h(e.payload);});
+    c.on('presence',{event:'sync'},()=>{
+      if(c!==ch)return;
+      const st=c.presenceState(),all=Object.keys(st).map(k=>({id:k,t:(st[k][0]&&st[k][0].t)||0}));
+      all.sort((a,b)=>a.t-b.t||(a.id<b.id?-1:1));
+      if(all.findIndex(x=>x.id===me.id)>=MAX_ROOM)next();
+    });
+    c.on('presence',{event:'leave'},e=>{if(c!==ch)return;(e.leftPresences||[]).forEach(x=>{if(x.id&&x.id!==me.id)removePeer(x.id);});});
+    c.subscribe(st=>{if(c===ch&&st==='SUBSCRIBED'){live=true;c.track({id:me.id,t:joinT});ready();}});
+  }
+  function next(){
+    if(full)return;
+    if(!sb||roomNo+1>=MAX_ROOMS){setFull();return;}
+    const old=ch;ch=null;live=false;try{sb.removeChannel(old);}catch(e){}
+    for(const id of [...peers.keys()])removePeer(id);heard.clear();roomNo++;open();
+  }
   if(window.supabase&&!qp.has('local')){
-    try{
-      sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:10}}});
-      ch=sb.channel('mind-hill-room',{config:{broadcast:{self:false},presence:{key:me.id}}});
-      ch.on('broadcast',{event:'m'},e=>h(e.payload));
-      ch.on('presence',{event:'sync'},()=>{
-        const st=ch.presenceState(),all=Object.keys(st).map(k=>({id:k,t:(st[k][0]&&st[k][0].t)||0}));
-        all.sort((a,b)=>a.t-b.t||(a.id<b.id?-1:1));
-        if(all.findIndex(x=>x.id===me.id)>=MAX_ROOM)setFull();
-      });
-      ch.on('presence',{event:'leave'},e=>{(e.leftPresences||[]).forEach(x=>{if(x.id&&x.id!==me.id)removePeer(x.id);});});
-      ch.subscribe(st=>{if(st==='SUBSCRIBED'){live=true;ch.track({id:me.id,t:joinT});ready();}});
-    }catch(e){ch=null;}
+    try{sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:10}}});open();}catch(e){sb=null;ch=null;}
   }
   if(!ch){try{bc=new BroadcastChannel('mind-hill-v2');bc.onmessage=e=>h(e.data);live=true;}catch(e){}}
   return{
     send:m=>{if(full||!live)return;if(ch)ch.send({type:'broadcast',event:'m',payload:m});else if(bc)bc.postMessage(m);},
-    on:f=>{h=f;},onReady:f=>{ready=f;if(bc)setTimeout(f,0);},
-    close:()=>{live=false;if(ch&&sb)sb.removeChannel(ch);if(bc)bc.close();}
+    on:f=>{h=f;},onReady:f=>{ready=f;if(bc)setTimeout(f,0);},next,
+    close:()=>{live=false;if(ch&&sb){try{sb.removeChannel(ch);}catch(e){}}if(bc)bc.close();}
   };
 })();
 const hello=()=>({t:'hi',id:me.id,look:LOOKS.indexOf(me.look),nm:me.nm,x:me.x,z:me.z,tx:me.tx,tz:me.tz,r:me.yaw,mode:me.mode});
@@ -831,7 +843,11 @@ for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventL
 /* ---------- 메인 루프 ---------- */
 let last=performance.now(),acc=0,T=0;
 function frame(now){
-  const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
+  const raw=now-last;const dt=Math.min(.05,raw/1000);last=now;T+=dt;
+  if(raw<100&&!document.hidden){perfSum+=raw;if(++perfN>=90){const avg=perfSum/perfN;perfN=0;perfSum=0;
+    if(avg>26&&dpr>.8){dpr=Math.max(.8,dpr-.15);perfOK=0;renderer.setPixelRatio(dpr);renderer.setSize(VW(),VH(),false);}
+    else if(avg<15&&dpr<MAXDPR){if(++perfOK>=4){perfOK=0;dpr=Math.min(MAXDPR,dpr+.1);renderer.setPixelRatio(dpr);renderer.setSize(VW(),VH(),false);}}
+    else perfOK=0;}}
   if(PORTRAIT&&!qp.has('closeup')){const dx=clamp((me.x+4)*.8,-22,12),dz=clamp((me.z+8)*.5,-22,3),k=Math.min(1,dt*3);camOff.x+=(dx-camOff.x)*k;camOff.z+=(dz-camOff.z)*k;camera.position.copy(camBase).add(camOff);tgtTmp.copy(CAM_TARGET).add(camOff);camera.lookAt(tgtTmp);}
   update(me,dt);for(const p of peers.values())update(p,dt);
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
@@ -855,7 +871,7 @@ function frame(now){
   if(qp.has('closeup')){const gy=topY(me.x,me.z);camera.position.set(me.x+4,gy+3.8,me.z+8.5);camera.lookAt(me.x,gy+2.6,me.z);}
   renderer.render(scene,camera);
   acc+=dt;
-  if(acc>.25){acc=0;for(const id of ['b1','b2','b3'])$(id).disabled=full;$('info').textContent=`${THEME_NAMES[theme]} · 접속 ${peers.size+1}/${MAX_ROOM}`;}
+  if(acc>.25){acc=0;for(const id of ['b1','b2','b3'])$(id).disabled=full;$('info').textContent=`${THEME_NAMES[theme]} · 접속 ${peers.size+1}/${MAX_ROOM}${roomNo?` · ${roomNo+1}번 방`:''}`;}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -864,7 +880,7 @@ let hintT=0;
 function showHint(){if($('modal').classList.contains('on')||full)return;const el=$('hint');el.classList.add('on');clearTimeout(hintT);hintT=setTimeout(()=>el.classList.remove('on'),4200);}
 setTimeout(showHint,1600);setInterval(showHint,20000);
 net.onReady(()=>net.send(hello()));
-setTimeout(()=>{if(heard.size>=MAX_ROOM)setFull();},1500);
+setTimeout(()=>{if(heard.size>=MAX_ROOM)net.next();},1500);
 </script>
 </body>
 </html>

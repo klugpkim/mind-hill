@@ -1,0 +1,33 @@
+{
+ "id": "./",
+ "name": "마음 날리는 언덕",
+ "short_name": "마음언덕",
+ "description": "누구에게도 말할 수 없는 고민을 털어놓고 날려 보내는 온라인 언덕.",
+ "lang": "ko",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "any",
+ "background_color": "#1b4f93",
+ "theme_color": "#1b4f93",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "any"
+  }
+ ]
+}
