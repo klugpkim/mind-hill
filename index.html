@@ -820,6 +820,9 @@ function makeFire(x,z){
 }
 function fireStep(e,dt){
   if(e===me&&fireOwner===me&&!e.fire&&!(e.joined&&e.mode==='sit')){fireLight.intensity=0;fireOwner=null;}
+  if(e===me&&e.joined&&e.mode==='sit'&&!(peers.get(e.joined)&&peers.get(e.joined).mode==='sit')){
+    me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});toast('불멍이 끝나서 다시 일어났어요.',1800);
+  }
   if(e===me&&e.joined&&e.mode==='sit'){
     const o=peers.get(e.joined),of=o&&o.fire;
     if(of){const t=performance.now()/1000,k=o.fk,ease=k*k*(3-2*k);fireOwner=me;fireLight.position.set(of.g.position.x,of.g.position.y+3,of.g.position.z);fireLight.intensity=ease*(160+30*Math.sin(t*10));}
