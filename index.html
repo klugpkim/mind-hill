@@ -943,6 +943,19 @@ function edgeSpot(fx,fz){
   }
   return best;
 }
+/* 물고기 4종: 파랑 / 금붕어 / 은빛 길쭉이 / 줄무늬 (머리는 +x, 입 위치 mo = 낚싯줄에 걸리는 높이) */
+function makeFish(v){
+  const g=new THREE.Group(),fi=new THREE.Group(),M=(c)=>lmat(c),sp=(sx,sy,sz,c,x=0,y=0,z=0)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),M(c));m.scale.set(sx,sy,sz);m.position.set(x,y,z);fi.add(m);return m;};
+  const cone=(r,h,c,x,y,sz,rz,sy=1)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,3),M(c));m.rotation.z=rz;m.scale.z=sz;m.scale.y=sy;m.position.set(x,y,0);fi.add(m);return m;};
+  const eye=(x,y,z)=>{for(const sd of [-1,1])sp(.08,.08,.08,'#14202c',x,y,z*sd);};
+  let len=1.25,sc=1;
+  if(v===0){sp(1.2,.5,.32,'#4f9fd4');sp(1.05,.26,.3,'#e9f3f8',0,-.2);cone(.5,.9,'#3b86bd',-1.5,0,.2,-Math.PI/2);cone(.3,.55,'#3b86bd',-.1,.55,.2,-.25);eye(.82,.12,.27);len=1.25;sc=.8;}
+  else if(v===1){sp(.95,.72,.46,'#ff8a3c');cone(.75,1.0,'#ff6a2a',-1.3,0,.14,-Math.PI/2);cone(.42,.7,'#ff6a2a',-.1,.7,.14,-.3);sp(.4,.2,.1,'#ffb06b',.1,-.3,.38);eye(.7,.18,.4);len=1.0;sc=.85;}
+  else if(v===2){sp(1.55,.32,.26,'#b4c6d4');sp(1.5,.16,.24,'#6a86a0',0,.2);cone(.34,.7,'#6a86a0',-1.85,0,.16,-Math.PI/2);cone(.2,.4,'#6a86a0',-.2,.38,.15,-.2);eye(1.2,.08,.22);len=1.55;sc=.78;}
+  else{sp(1.0,.58,.42,'#ff7a1f');for(const x of [-.25,.4]){const r=new THREE.Mesh(new THREE.TorusGeometry(.4,.07,6,12),M('#ffffff'));r.rotation.y=Math.PI/2;r.position.x=x;r.scale.set(1,1.3*(1-Math.abs(x)*.5),1);fi.add(r);}cone(.55,.8,'#1f2a33',-1.25,0,.14,-Math.PI/2);cone(.34,.5,'#1f2a33',0,.6,.14,-.2);eye(.74,.16,.34);len=1.05;sc=.85;}
+  fi.rotation.z=1.45;g.add(fi);g.scale.setScalar(sc);
+  return {g,mo:len*sc};
+}
 function startAct(e,k,o){
   endAct(e,false);o=o||{};
   const rig=e.rig,a={k,t:0,dur:ACT_DUR[k],P:null};
@@ -954,15 +967,8 @@ function startAct(e,k,o){
     const bob=new THREE.Mesh(new THREE.SphereGeometry(.28,8,6),lmat('#ff5a4a'));bob.position.set(bx,by,bz);scene.add(bob);
     const lgeo=new THREE.BufferGeometry();lgeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
     const line=new THREE.Line(lgeo,new THREE.LineBasicMaterial({color:'#ffffff',transparent:true,opacity:.85}));line.frustumCulled=false;scene.add(line);
-    const fish=new THREE.Group(),fi=new THREE.Group();
-    const fb=new THREE.Mesh(new THREE.SphereGeometry(1,12,9),lmat('#4f9fd4')),bl=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),lmat('#e9f3f8')),
-      ft=new THREE.Mesh(new THREE.ConeGeometry(.55,.95,3),lmat('#3b86bd')),fd=new THREE.Mesh(new THREE.ConeGeometry(.3,.55,3),lmat('#3b86bd')),
-      fe1=new THREE.Mesh(new THREE.SphereGeometry(.1,6,5),lmat('#14202c')),fe2=fe1.clone();
-    fb.scale.set(1.2,.5,.32);bl.scale.set(1.05,.26,.3);bl.position.y=-.2;
-    ft.rotation.z=-Math.PI/2;ft.scale.z=.2;ft.position.x=-1.5;fd.scale.z=.2;fd.position.set(-.1,.55,0);fd.rotation.z=-.25;
-    fe1.position.set(.82,.12,.27);fe2.position.set(.82,.12,-.27);
-    fi.add(fb,bl,ft,fd,fe1,fe2);fi.rotation.z=1.45;fish.add(fi);fish.scale.setScalar(1.45);fish.visible=false;scene.add(fish);
-    a.P={rod,bob,line,fish,bx,by,bz};
+    const fv=makeFish(Math.floor(Math.abs(Math.sin(e.x*12.9+e.z*78.2)*43758.5)%4)),fish=fv.g;fish.visible=false;scene.add(fish);
+    a.P={rod,bob,line,fish,bx,by,bz,mo:fv.mo};
   }else if(k==='tea'){
     e.tyaw=e.yaw=0;
     const ch=new THREE.Group(),wm=lmat(PAL.tree[3]),cm=lmat('#d9a066');
@@ -1044,11 +1050,11 @@ function actStep(e,dt){
     if(reel<=0){fx=P.bob.position.x;fy=P.bob.position.y;fz=P.bob.position.z;P.fish.visible=false;}
     else{
       P.fish.visible=true;e.smile=.5;
-      if(t<7){const u=easeIO(reel);fx=P.bx+(tx-P.bx)*u;fz=P.bz+(tz-P.bz)*u;fy=P.by+(ty-2.8-P.by)*u+5*Math.sin(Math.PI*u);P.fish.rotation.z=.6*Math.sin(t*22);}
-      else{fx=tx+.15*Math.sin(t*4);fy=ty-2.8;fz=tz;P.fish.rotation.z=.3*Math.sin(t*6);}
+      if(t<7){const u=easeIO(reel);fx=P.bx+(tx-P.bx)*u;fz=P.bz+(tz-P.bz)*u;fy=P.by+(ty-.9-P.mo-P.by)*u+5*Math.sin(Math.PI*u);P.fish.rotation.z=.6*Math.sin(t*22);}
+      else{fx=tx+.15*Math.sin(t*4);fy=ty-.9-P.mo;fz=tz;P.fish.rotation.z=.3*Math.sin(t*6);}
       P.fish.position.set(fx,fy,fz);P.fish.rotation.y=Math.atan2(-a.n[1],a.n[0]);
     }
-    const pa=P.line.geometry.attributes.position;pa.setXYZ(0,tx,ty,tz);pa.setXYZ(1,fx,reel>0?fy+1.9:fy,fz);pa.needsUpdate=true;
+    const pa=P.line.geometry.attributes.position;pa.setXYZ(0,tx,ty,tz);pa.setXYZ(1,fx,reel>0?fy+P.mo:fy,fz);pa.needsUpdate=true;
   }else if(a.k==='tea'){
     const dur=a.dur,sitA=easeIO(c01((t-.3)/.5))*(1-easeIO(c01((t-(dur-1.1))/.5)));
     P.ch.scale.setScalar(Math.max(.01,Math.min(easeIO(c01(t/.6)),1-easeIO(c01((t-(dur-.7))/.6)))));
