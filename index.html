@@ -28,6 +28,9 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #bar .btn:hover:not(:disabled){background:rgba(255,255,255,.12)}
 .btn:active:not(:disabled){transform:scale(.97)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+#wm{position:absolute;z-index:1;left:50%;top:46%;transform:translate(-50%,-50%);width:min(78%,380px);text-align:center;color:#fff;font-size:15px;font-weight:300;line-height:1.75;letter-spacing:.02em;word-break:keep-all;opacity:0;transition:opacity .9s;pointer-events:none;user-select:none;-webkit-user-select:none}
+#wm.on{opacity:.26}
+#wm.hot{opacity:.92;font-size:17px;transition:opacity .15s}
 #bubbles{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
 #names{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
 .nm{position:absolute;left:0;top:0;white-space:nowrap;font-size:clamp(10px,calc(12.5px * var(--k,1)),15px);font-weight:400;letter-spacing:.01em;color:#fff;opacity:.82;text-shadow:0 1px 3px rgba(0,20,50,.55),0 0 8px rgba(0,20,50,.25);will-change:transform}
@@ -83,6 +86,7 @@ window.__showErr=show;})();
   <div id="names"></div>
   <div id="bubbles"></div>
   <div id="vig"></div>
+  <div id="wm">이곳의 마음은 머물지 않고 날아가요.<br>기록하지 말고 그냥 흘려보내 주세요.</div>
   <div id="bar">
     <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01" stroke-width="2.2"/><ellipse cx="12" cy="15.4" rx="2" ry="2.6"/></svg><span>소리지르기</span></button>
     <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 2.8a8.5 8.5 0 1 1-4 16l-3.8 1.3 1.3-3.6A8.5 8.5 0 0 1 12 2.8z"/></svg><span>고민 날려보내기</span></button>
@@ -874,6 +878,10 @@ renderer.domElement.addEventListener('pointerdown',ev=>{
 let toastT=0;
 function toast(msg,ms=2600){const el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),ms);}
 /* 함께 불멍하기 */
+const wmEl=$('wm');let wmOn=false,wmHotT=0;
+function wmHot(){wmEl.classList.add('hot');clearTimeout(wmHotT);wmHotT=setTimeout(()=>wmEl.classList.remove('hot'),3200);}
+addEventListener('keydown',e=>{if(e.key==='PrintScreen')wmHot();});
+addEventListener('keyup',e=>{if(e.key==='PrintScreen')wmHot();});
 let joinTarget=null,joinKind='fire';const joinBtn=$('join'),joinTxt=joinBtn.querySelector('span');
 function showJoin(p,kind='fire'){joinTarget=p;joinKind=kind;joinTxt.textContent=kind==='hug'?'안아주기':'함께 불멍하기';joinBtn.classList.toggle('hug',kind==='hug');joinBtn.classList.add('on');placeJoin();}
 function hideJoin(){joinTarget=null;joinBtn.classList.remove('on');}
@@ -974,6 +982,7 @@ function frame(now){
   camera.getWorldDirection(_cd);
   update(me,dt);for(const p of peers.values())update(p,dt);
   placeJoin();
+  if(wmOn!==(bubbles.length>0)){wmOn=!wmOn;wmEl.classList.toggle('on',wmOn);}
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
     const b=bubbles[i];b.t+=dt;
