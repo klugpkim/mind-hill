@@ -260,7 +260,7 @@ const ctex=(cv,rep)=>{const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRG
 
 const sun=new THREE.DirectionalLight(PAL.sunCol,PAL.sunI);
 sun.position.set(...PAL.sunPos);sun.castShadow=true;
-sun.shadow.mapSize.set(LOW?2048:4096,LOW?2048:4096);Object.assign(sun.shadow.camera,{left:-52,right:34,top:34,bottom:-46,near:1,far:160});
+sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-52,right:34,top:34,bottom:-46,near:1,far:160});
 sun.shadow.bias=-.0005;sun.shadow.normalBias=.06;sun.target.position.set(-10,0,-10);
 scene.add(sun,sun.target);
 scene.add(new THREE.HemisphereLight(PAL.hemi[0],PAL.hemi[1],PAL.hemiI));
@@ -473,13 +473,10 @@ if(theme==='rain'){
 /* ---------- 파도: 로우폴리 흰 물결 + 크게 부딪히는 물보라 ---------- */
 const foamCol=new THREE.Color(PAL.foam).lerp(new THREE.Color('#ffffff'),.65);
 const foamMat=o=>new THREE.MeshLambertMaterial({color:foamCol,emissive:foamCol,emissiveIntensity:.45,flatShading:true,transparent:true,opacity:o,depthWrite:false});
-const foamSprites=[];
-function addFoam(x,z,s){
-  const m=new THREE.Mesh(new THREE.CircleGeometry(1,6),new THREE.MeshBasicMaterial({color:PAL.foam,transparent:true,opacity:.8,depthWrite:false}));
-  m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6;m.scale.set(s*1.5,s,1);m.position.set(x,WATER+.15,z);
-  m.userData={bx:x,bz:z,s,ph:Math.random()*6};scene.add(m);foamSprites.push(m);
-}
-for(const bp of BASEPTS)addFoam(bp.x+bp.nx*.6,bp.z+bp.nz*.6,rnd(1.4,2.4));
+const foamPts=BASEPTS.map(bp=>({x:bp.x+bp.nx*.6,z:bp.z+bp.nz*.6,s:rnd(1.4,2.4),ph:Math.random()*6,rz:Math.random()*6}));
+const foamMesh=new THREE.InstancedMesh(new THREE.CircleGeometry(1,6),new THREE.MeshBasicMaterial({color:PAL.foam,transparent:true,opacity:.75,depthWrite:false}),foamPts.length);
+foamMesh.frustumCulled=false;scene.add(foamMesh);
+const _fm=new THREE.Matrix4(),_fq=new THREE.Quaternion(),_fe=new THREE.Euler(),_fp=new THREE.Vector3(),_fs=new THREE.Vector3();
 const RF=theme==='rain'?1.9:1;
 const NCR=theme==='rain'?20:14;
 const swellGeo=new THREE.SphereGeometry(1,7,4,0,Math.PI*2,0,Math.PI/2),fingerGeo=new THREE.ConeGeometry(.8,1,5,1).translate(0,.5,0),dropGeo=new THREE.IcosahedronGeometry(1,0);
@@ -487,7 +484,8 @@ const crashCand=BASEPTS.filter(b=>b.nz>-.35||b.nx>.4);
 const crashes=Array.from({length:NCR},(_,i)=>{
   const b=crashCand[Math.floor((i+Math.random()*.8)/NCR*crashCand.length)%crashCand.length];
   const swell=new THREE.Mesh(swellGeo,foamMat(0));swell.visible=false;scene.add(swell);
-  const fingers=Array.from({length:6},(_,k)=>{const f=new THREE.Mesh(fingerGeo,foamMat(0));f.visible=false;scene.add(f);return {m:f,t:(k-2.5)*.95+rnd(-.2,.2),l:rnd(.55,1.1),r:rnd(1.9,2.9),lean:rnd(.15,.5)};});
+  const fMat=foamMat(0);
+  const fingers=Array.from({length:6},(_,k)=>{const f=new THREE.Mesh(fingerGeo,fMat);f.visible=false;scene.add(f);return {m:f,t:(k-2.5)*.95+rnd(-.2,.2),l:rnd(.55,1.1),r:rnd(1.9,2.9),lean:rnd(.15,.5)};});
   return {x:b.x,z:b.z,nx:b.nx,nz:b.nz,per:theme==='rain'?rnd(2.6,3.8):rnd(3.8,5.4),off:rnd(0,6),fired:-1,swell,fingers};
 });
 const dropMat=new THREE.MeshLambertMaterial({color:foamCol,emissive:foamCol,emissiveIntensity:.5,flatShading:true});
@@ -517,7 +515,10 @@ function updateCrash(t,dt){
     }
   }
   for(const p of sprayPool){if(!p.on)continue;p.t+=dt;p.v.y-=17*dt;p.s.position.addScaledVector(p.v,dt);p.s.rotation.x+=dt*3;const k=Math.max(0,1-p.t/p.life);p.s.scale.setScalar(p.sz*(.25+.75*Math.sqrt(k)));if(p.t>p.life||p.s.position.y<WATER-.2){p.on=false;p.s.visible=false;}}
-  for(const s of foamSprites){const u=s.userData;s.position.x=u.bx+Math.sin(t*.8+u.ph)*.3*RF;s.material.opacity=.65+.2*Math.sin(t*1.1+u.ph);const k=1+.14*Math.sin(t*1.2+u.ph);s.scale.set(u.s*1.5*k,u.s*k,1);}
+  for(let i=0;i<foamPts.length;i++){const u=foamPts[i],k=1+.14*Math.sin(t*1.2+u.ph);
+    _fq.setFromEuler(_fe.set(-Math.PI/2,0,u.rz));_fp.set(u.x+Math.sin(t*.8+u.ph)*.3*RF,WATER+.15,u.z);_fs.set(u.s*1.5*k,u.s*k,1);
+    foamMesh.setMatrixAt(i,_fm.compose(_fp,_fq,_fs));}
+  foamMesh.instanceMatrix.needsUpdate=true;foamMesh.material.opacity=.72+.08*Math.sin(t*1.1);
 }
 
 /* ---------- 캐릭터 3D ---------- */
@@ -655,7 +656,23 @@ function mk(id,look,x,z,nm){
   return{id,look,x,z,tx:x,tz:z,yaw:0,tyaw:0,mode:'idle',modeT:0,t:Math.random()*10,pending:null,lastSeen:Date.now(),lastBubble:0,rig,nm,label,tearOff:Math.random()*3};
 }
 const lkq=qp.has('look')?+qp.get('look'):-1;
-const me=mk(uid(),LOOKS[lkq>=0&&lkq<LOOKS.length?lkq:Math.random()*LOOKS.length|0],rnd(-10,0),rnd(-8,2),[Math.floor(Math.random()*NAME_A.length),Math.floor(Math.random()*NAME_N.length)]);
+/* 접속할 때마다 나무·바위·통나무·풀·다른 접속자와 겹치지 않는 자리에 무작위로 */
+function pickSpawn(avoid){
+  let best=null,bs=-1;
+  for(let k=0;k<400;k++){
+    const x=-34+Math.random()*46,z=-30+Math.random()*32;
+    if(!inside(x,z,4))continue;
+    let dO=1e9,dP=1e9;
+    for(const q of placed)dO=Math.min(dO,Math.hypot(x-q[0],z-q[1]));
+    for(const q of avoid)dP=Math.min(dP,Math.hypot(x-q.x,z-q.z));
+    const sc=Math.min(dO/5.2,dP/5);
+    if(sc>=1)return [x,z];
+    if(sc>bs){bs=sc;best=[x,z];}
+  }
+  return best||[-8,-15];
+}
+const bootT=Date.now(),SP=pickSpawn([]);
+const me=mk(uid(),LOOKS[lkq>=0&&lkq<LOOKS.length?lkq:Math.random()*LOOKS.length|0],SP[0],SP[1],[Math.floor(Math.random()*NAME_A.length),Math.floor(Math.random()*NAME_N.length)]);
 me.label.classList.add('me');
 const peers=new Map();
 const bubbles=[];
@@ -694,7 +711,13 @@ const net=(()=>{
   };
 })();
 const hello=()=>({t:'hi',id:me.id,look:LOOKS.indexOf(me.look),nm:me.nm,x:me.x,z:me.z,tx:me.tx,tz:me.tz,r:me.yaw,mode:me.mode,j:me.mode==='sit'&&me.joined?me.joined:undefined});
-function removePeer(id){const p=peers.get(id);if(p){if(p.fire)scene.remove(p.fire.g);scene.remove(p.rig.root);p.label.remove();peers.delete(id);}}
+function removePeer(id){
+  const p=peers.get(id);if(!p)return;
+  if(p.fire)scene.remove(p.fire.g);
+  scene.remove(p.rig.root);
+  p.rig.root.traverse(o=>{if(o.geometry)o.geometry.dispose();const m=o.material;if(m&&m.isMeshBasicMaterial&&m!==eyeMat&&m!==mouthMat)m.dispose();});
+  p.label.remove();peers.delete(id);
+}
 function getPeer(m){
   let p=peers.get(m.id);
   if(!p){if(peers.size>=MAX_ROOM-1)return null;p=mk(m.id,LOOKS[m.look|0]||LOOKS[0],-4,0,validNm(m.nm));peers.set(m.id,p);}
@@ -714,6 +737,7 @@ net.on(m=>{
     [p.tx,p.tz]=clampTarget(num(m.tx,-52,30,x),num(m.tz,-38,8,z));
     p.tyaw=num(m.r,-7,7,0);if(!known)p.yaw=p.tyaw;
     if(['idle','walk','sit'].includes(m.mode)){p.mode=m.mode;p.joined=m.mode==='sit'&&typeof m.j==='string'&&m.j.length<=16?m.j:null;}
+    if(!known&&me.mode==='idle'&&Date.now()-bootT<8000&&Math.hypot(me.x-p.x,me.z-p.z)<5){const sp=pickSpawn(peers.values());me.x=me.tx=sp[0];me.z=me.tz=sp[1];}
     if(!known)net.send(hello());
     return;
   }
