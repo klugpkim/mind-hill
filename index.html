@@ -43,6 +43,10 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #info{position:absolute;left:16px;bottom:calc(var(--nav) + 12px + env(safe-area-inset-bottom));font-size:12px;color:#fff;opacity:.9;pointer-events:none;z-index:3}
 #toast{position:absolute;z-index:4;left:50%;width:max-content;word-break:keep-all;bottom:calc(var(--nav) + 52px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(92%,460px);font-size:15px;font-weight:500;line-height:1.5;text-align:center;color:#fff;opacity:0;transition:opacity .25s;pointer-events:none}
 #toast.on{opacity:1}
+#join{position:absolute;z-index:4;left:0;top:0;display:none;align-items:center;gap:7px;padding:9px 17px 9px 14px;border:0;border-radius:999px;font:inherit;font-size:13.5px;font-weight:400;letter-spacing:.02em;color:#fff;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;background:linear-gradient(135deg,rgba(255,190,110,.4),rgba(255,255,255,.1));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 6px 22px rgba(0,20,50,.16),inset 0 1px 0 rgba(255,255,255,.3)}
+#join.on{display:flex;animation:jpop .25s ease-out}
+#join svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+@keyframes jpop{from{opacity:0}to{opacity:1}}
 #credit{position:absolute;right:16px;bottom:calc(var(--nav) + 12px + env(safe-area-inset-bottom));font-size:12px;color:#fff;opacity:.88;pointer-events:none;z-index:3}
 #hint{position:absolute;z-index:4;left:50%;width:max-content;word-break:keep-all;top:calc(52px + env(safe-area-inset-top));transform:translate(-50%,-8px);max-width:min(92%,520px);font-size:14.5px;font-weight:300;line-height:1.6;text-align:center;color:#fff;opacity:0;transition:opacity .6s,transform .6s;pointer-events:none}
 #hint.on{opacity:1;transform:translate(-50%,0)}
@@ -84,6 +88,7 @@ window.__showErr=show;})();
   </div>
   <div id="info"></div>
   <div id="toast"></div>
+  <button id="join"><svg viewBox="0 0 24 24"><path d="M12 3c.6 3.200-3.500 5-3.500 9.200a3.500 3.500 0 0 0 7 0C15.500 9.500 13 7 12 3z"/><path d="M5 21h14"/></svg><span>함께 불멍하기</span></button>
   <div id="hint">모든 내용은 저 언덕 너머로 날아가요,<br>안심하고 고민을 털어놓아 봐요</div>
   <div id="credit">by. kunilkim</div>
   <div id="full">지금은 언덕이 가득 찼어요.<br>잠시 후에 다시 와주세요.</div>
@@ -682,7 +687,7 @@ const net=(()=>{
     close:()=>{live=false;if(ch&&sb){try{sb.removeChannel(ch);}catch(e){}}if(bc)bc.close();}
   };
 })();
-const hello=()=>({t:'hi',id:me.id,look:LOOKS.indexOf(me.look),nm:me.nm,x:me.x,z:me.z,tx:me.tx,tz:me.tz,r:me.yaw,mode:me.mode});
+const hello=()=>({t:'hi',id:me.id,look:LOOKS.indexOf(me.look),nm:me.nm,x:me.x,z:me.z,tx:me.tx,tz:me.tz,r:me.yaw,mode:me.mode,j:me.mode==='sit'&&me.joined?me.joined:undefined});
 function removePeer(id){const p=peers.get(id);if(p){if(p.fire)scene.remove(p.fire.g);scene.remove(p.rig.root);p.label.remove();peers.delete(id);}}
 function getPeer(m){
   let p=peers.get(m.id);
@@ -702,7 +707,7 @@ net.on(m=>{
     if(!known||Math.hypot(p.x-x,p.z-z)>2){p.x=x;p.z=z;}
     [p.tx,p.tz]=clampTarget(num(m.tx,-52,30,x),num(m.tz,-38,8,z));
     p.tyaw=num(m.r,-7,7,0);if(!known)p.yaw=p.tyaw;
-    if(['idle','walk','sit'].includes(m.mode))p.mode=m.mode;
+    if(['idle','walk','sit'].includes(m.mode)){p.mode=m.mode;p.joined=m.mode==='sit'&&typeof m.j==='string'&&m.j.length<=16?m.j:null;}
     if(!known)net.send(hello());
     return;
   }
@@ -712,12 +717,15 @@ net.on(m=>{
     const x=num(m.x,-52,30,p.x),z=num(m.z,-38,8,p.z);
     if(Math.hypot(p.x-x,p.z-z)>1.6){p.x=x;p.z=z;}
     [p.tx,p.tz]=clampTarget(num(m.tx,-52,30,x),num(m.tz,-38,8,z));
-    p.mode='walk';p.pending=null;
+    p.mode='walk';p.pending=null;p.joined=null;
   }else if(m.t==='an'){
     p.tyaw=num(m.r,-7,7,p.tyaw);
-    if(m.a==='scream'||m.a==='cup'){p.mode=m.a;p.modeT=0;p.tx=p.x;p.tz=p.z;}
-    else if(m.a==='sit'){p.mode='sit';p.tx=p.x;p.tz=p.z;}
-    else p.mode='idle';
+    if(m.a==='scream'||m.a==='cup'){p.mode=m.a;p.modeT=0;p.tx=p.x;p.tz=p.z;p.joined=null;}
+    else if(m.a==='sit'){
+      const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<4){p.x=sx;p.z=sz;}
+      p.mode='sit';p.tx=p.x;p.tz=p.z;p.joined=typeof m.j==='string'&&m.j.length<=16?m.j:null;
+    }
+    else{p.mode='idle';p.joined=null;}
   }else if(m.t==='bb'){
     const now=Date.now();
     if(now-p.lastBubble<PEER_MIN_BUBBLE_GAP)return;
@@ -766,7 +774,13 @@ function makeFire(x,z){
   g.position.set(x,topY(x,z),z);scene.add(g);return {g,flames,gl};
 }
 function fireStep(e,dt){
-  if(e.mode==='sit'){
+  if(e===me&&fireOwner===me&&!e.fire&&!(e.joined&&e.mode==='sit')){fireLight.intensity=0;fireOwner=null;}
+  if(e===me&&e.joined&&e.mode==='sit'){
+    const o=peers.get(e.joined),of=o&&o.fire;
+    if(of){const t=performance.now()/1000,k=o.fk,ease=k*k*(3-2*k);fireOwner=me;fireLight.position.set(of.g.position.x,of.g.position.y+3,of.g.position.z);fireLight.intensity=ease*(160+30*Math.sin(t*10));}
+    else if(fireOwner===me){fireLight.intensity=0;fireOwner=null;}
+  }
+  if(e.mode==='sit'&&!e.joined){
     if(!e.fire){const [fx,fz]=clampTarget(e.x+3.3,e.z-1.9);e.fire=makeFire(fx,fz);e.fk=0;}
     e.fk=Math.min(1,e.fk+dt*1.8);
   }else if(e.fire){
@@ -795,7 +809,10 @@ function update(e,dt){
   }else if(e.mode!=='sit'){
     const dx=e.tx-e.x,dz=e.tz-e.z,d=Math.hypot(dx,dz);
     if(d>.08){const st=Math.min(d,SPEED*dt);e.x+=dx/d*st;e.z+=dz/d*st;e.tyaw=Math.atan2(dx,dz);e.mode='walk';}
-    else e.mode='idle';
+    else{
+      e.mode='idle';
+      if(e.join){const j=e.join;e.join=null;e.tyaw=j.yaw;e.joined=j.id;e.mode='sit';if(e===me)net.send({t:'an',id:me.id,a:'sit',j:j.id,x:e.x,z:e.z,r:e.tyaw});}
+    }
   }
   e.yaw+=angDiff(e.yaw,e.tyaw)*Math.min(1,dt*10);
   const r=e.rig.root;r.position.set(e.x,topY(e.x,e.z),e.z);r.rotation.y=e.yaw;r.scale.setScalar(1.65*(e.look.scale||1)*CHARBOOST*clamp(_cd2.copy(r.position).sub(camera.position).dot(_cd)/REFD,.7,1.4));
@@ -806,27 +823,59 @@ function update(e,dt){
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
 renderer.domElement.addEventListener('pointerdown',ev=>{
   if(full)return;
+  const rc=stage.getBoundingClientRect(),cx=ev.clientX-rc.left,cy=ev.clientY-rc.top;
+  for(const p of peers.values()){
+    const f=p.fire;if(!f||p.mode!=='sit'||p.joined||p.fk<.5)continue;
+    const [fx,fy]=toScreen(f.g.position.x,f.g.position.y+2.5,f.g.position.z);
+    if(Math.hypot(cx-fx,cy-fy)<Math.max(46,64*UK)){showJoin(p);return;}
+  }
+  hideJoin();
   ndc.set(ev.clientX/VW()*2-1,-(ev.clientY/VH())*2+1);ray.setFromCamera(ndc,camera);
   if(!ray.ray.intersectPlane(plane,hit))return;
   const [x,z]=clampTarget(hit.x,hit.z);
-  me.tx=x;me.tz=z;me.pending=null;me.mode='walk';
+  me.tx=x;me.tz=z;me.pending=null;me.join=null;me.joined=null;me.mode='walk';
   net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
 });
 let toastT=0;
 function toast(msg,ms=2600){const el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),ms);}
+/* 함께 불멍하기 */
+let joinTarget=null;const joinBtn=$('join');
+function showJoin(p){joinTarget=p;joinBtn.classList.add('on');placeJoin();}
+function hideJoin(){joinTarget=null;joinBtn.classList.remove('on');}
+function placeJoin(){
+  const p=joinTarget;if(!p)return;
+  if(!peers.has(p.id)||!p.fire||p.mode!=='sit'||p.joined||p.fk<.5){hideJoin();return;}
+  const [sx,sy]=toScreen(p.fire.g.position.x,p.fire.g.position.y+5.2,p.fire.g.position.z);
+  joinBtn.style.transform=`translate(${sx}px,${sy}px) translate(-50%,-100%)`;
+}
+function joinFire(p){
+  const f=p.fire;if(!f)return;
+  const fx=f.g.position.x,fz=f.g.position.z,vx=p.x-fx,vz=p.z-fz,len=Math.hypot(vx,vz)||1;
+  let best=null,bd=1e9;
+  for(const a of [1.85,-1.85]){
+    const c=Math.cos(a),s=Math.sin(a),dx=(vx*c-vz*s)/len*3.4,dz=(vx*s+vz*c)/len*3.4,[x,z]=clampTarget(fx+dx,fz+dz),d=Math.hypot(x-fx-dx,z-fz-dz);
+    if(d<bd){bd=d;best=[x,z];}
+  }
+  const [x,z]=best;
+  me.tx=x;me.tz=z;me.pending=null;me.joined=null;me.join={id:p.id,yaw:Math.atan2(fx-x,fz-z)};me.mode='walk';
+  net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
+  toast('모닥불 옆으로 가서 함께 앉아요.',2200);
+}
+joinBtn.addEventListener('pointerdown',e=>e.stopPropagation());
+joinBtn.onclick=()=>{const p=joinTarget;hideJoin();if(p&&!full)joinFire(p);};
 let cdUntil=0;
 const cdLeft=()=>Math.max(0,cdUntil-Date.now());
 function startAnim(mode,pending){
   if(mode==='scream'||mode==='cup')me.tyaw=Math.PI/2;
-  me.mode=mode;me.modeT=0;me.tx=me.x;me.tz=me.z;me.pending=pending;
-  net.send({t:'an',id:me.id,a:mode,r:me.tyaw});
+  me.mode=mode;me.modeT=0;me.tx=me.x;me.tz=me.z;me.pending=pending;me.join=null;me.joined=null;
+  net.send({t:'an',id:me.id,a:mode,r:me.tyaw,x:me.x,z:me.z});
 }
 function ready(){if(full)return false;const c=cdLeft();if(c>0){toast(`${Math.ceil(c/1000)}초 후에 가능해요`,1500);return false;}return true;}
 $('b1').onclick=()=>{if(!ready())return;cdUntil=Date.now()+COOLDOWN;const si=Math.floor(Math.random()*SCREAMS.length);me.scIdx=si;startAnim('scream',{at:.45,text:SCREAMS[si],scream:true});};
 $('b2').onclick=()=>{if(!ready())return;$('err').textContent='';$('txt').value='';$('cnt').textContent='0/50';$('modal').classList.add('on');setTimeout(()=>$('txt').focus(),50);};
 $('b3').onclick=()=>{
   if(full)return;
-  if(me.mode==='sit'){me.mode='idle';net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});toast('다시 일어났어요.',1200);return;}
+  if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});toast('다시 일어났어요.',1200);return;}
   startAnim('sit',null);toast('잠시 앉아서 풍경을 바라봐요. 바닥을 누르면 다시 걸어요.',2800);
 };
 $('txt').addEventListener('input',()=>{$('cnt').textContent=$('txt').value.length+'/50';$('err').textContent='';});
@@ -875,6 +924,7 @@ function frame(now){
   if(PORTRAIT&&!qp.has('closeup')){const dx=clamp((me.x+4)*.8,-22,12),dz=clamp((me.z+8)*.5,-22,3),k=Math.min(1,dt*3);camOff.x+=(dx-camOff.x)*k;camOff.z+=(dz-camOff.z)*k;camera.position.copy(camBase).add(camOff);tgtTmp.copy(CAM_TARGET).add(camOff);camera.lookAt(tgtTmp);}
   camera.getWorldDirection(_cd);
   update(me,dt);for(const p of peers.values())update(p,dt);
+  placeJoin();
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
     const b=bubbles[i];b.t+=dt;
