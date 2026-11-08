@@ -113,10 +113,10 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const sm01=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
 
-const THEMES=['sunny','sunset','rain','night'];
+const THEMES=['sunset','rain','night'];
 const THEME_NAMES={sunny:'해가 쨍한 언덕',sunset:'노을이 지는 언덕',rain:'비 내리는 언덕',night:'달이 뜬 언덕'};
 const qp=new URLSearchParams(location.search);
-const theme=THEMES.includes(qp.get('theme'))?qp.get('theme'):THEMES[Math.random()*4|0];
+const theme=THEMES.includes(qp.get('theme'))?qp.get('theme'):THEMES[Math.random()*THEMES.length|0];
 
 /* ---------- 비속어 / 괴롭힘 / 도배 필터 ---------- */
 const MASK=['시발','씨발','씨빨','시팔','씨팔','시벌','씨벌','쉬발','ㅅㅂ','ㅆㅂ','지랄','ㅈㄹ','좆','썅','fuck','shit','bitch','asshole','bastard','dick','pussy'];
