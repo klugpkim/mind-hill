@@ -45,6 +45,8 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #toast.on{opacity:1}
 #join{position:absolute;z-index:4;left:0;top:0;display:none;align-items:center;gap:7px;padding:9px 17px 9px 14px;border:0;border-radius:999px;font:inherit;font-size:13.5px;font-weight:400;letter-spacing:.02em;color:#fff;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;background:linear-gradient(135deg,rgba(255,190,110,.4),rgba(255,255,255,.1));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 6px 22px rgba(0,20,50,.16),inset 0 1px 0 rgba(255,255,255,.3)}
 #join.on{display:flex;animation:jpop .25s ease-out}
+#join .ht{display:none}#join.hug .ht{display:block}#join.hug svg:not(.ht){display:none}
+#join.hug{background:linear-gradient(135deg,rgba(255,150,170,.4),rgba(255,255,255,.1))}
 #join svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 @keyframes jpop{from{opacity:0}to{opacity:1}}
 #credit{position:absolute;right:16px;bottom:calc(var(--nav) + 12px + env(safe-area-inset-bottom));font-size:12px;color:#fff;opacity:.88;pointer-events:none;z-index:3}
@@ -88,7 +90,7 @@ window.__showErr=show;})();
   </div>
   <div id="info"></div>
   <div id="toast"></div>
-  <button id="join"><svg viewBox="0 0 24 24"><path d="M12 3c.6 3.200-3.500 5-3.500 9.200a3.500 3.500 0 0 0 7 0C15.500 9.500 13 7 12 3z"/><path d="M5 21h14"/></svg><span>함께 불멍하기</span></button>
+  <button id="join"><svg viewBox="0 0 24 24"><path d="M12 3c.6 3.200-3.500 5-3.500 9.200a3.500 3.500 0 0 0 7 0C15.500 9.500 13 7 12 3z"/><path d="M5 21h14"/></svg><svg class="ht" viewBox="0 0 24 24"><path d="M12 20s-7.500-4.500-7.500-10A4.200 4.200 0 0 1 12 7.500 4.200 4.200 0 0 1 19.500 10C19.500 15.500 12 20 12 20z"/></svg><span>함께 불멍하기</span></button>
   <div id="hint">모든 내용은 저 언덕 너머로 날아가요,<br>안심하고 고민을 털어놓아 봐요</div>
   <div id="credit">by. kunilkim</div>
   <div id="full">지금은 언덕이 가득 찼어요.<br>잠시 후에 다시 와주세요.</div>
@@ -614,12 +616,14 @@ function animChar(e,dt){
   if(m==='walk'){const ph=t*14;sw=Math.sin(ph);bob=Math.abs(Math.sin(ph))*.14;}
   else if(m==='idle')bob=Math.sin(t*2)*.04;
   else if(sit)bob=Math.sin(t*1.4)*.03;
+  else if(m==='hug')bob=Math.sin(t*2.6)*.04;
   c.g.position.y=bob-(sit?.62:0);
   const lerp=(a,b,k)=>a+(b-a)*k,k=Math.min(1,dt*14);
   const tgt={l0:0,l1:0,a0:0,a1:0,az:0,hx:0,mouth:0};
   if(m==='walk'){tgt.l0=sw*.7;tgt.l1=-sw*.7;tgt.a0=-sw*.8;tgt.a1=sw*.8;}
   else if(sit){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-.3;tgt.a1=-.3;}
   else if(m==='scream'){tgt.a0=-2.9;tgt.a1=-2.9;tgt.hx=-.5;tgt.mouth=1;}
+  else if(m==='hug'){tgt.a0=-1.3;tgt.a1=-1.3;tgt.az=.5;tgt.hx=.14;tgt.mouth=.25;}
   else if(m==='cup'){tgt.a0=-1.95;tgt.a1=-1.95;tgt.az=.55;tgt.mouth=.4;}
   const lg=c.legs,ar=c.arms;
   lg[0].rotation.x=lerp(lg[0].rotation.x,tgt.l0,k);lg[1].rotation.x=lerp(lg[1].rotation.x,tgt.l1,k);
@@ -628,7 +632,7 @@ function animChar(e,dt){
   c.head.rotation.x=lerp(c.head.rotation.x,tgt.hx,k);
   const ms=lerp(c.mouth.scale.x,tgt.mouth*.13+.001,k);
   c.mouth.scale.set(ms,ms*(m==='scream'?1.35:1),ms*.4);
-  const closed=sit||m==='scream',blink=(t%4)>3.88;
+  const closed=sit||m==='scream'||m==='hug',blink=(t%4)>3.88;
   for(const sx of [-1,1]){const eye=c.head.userData['eye'+sx];eye.scale.y=closed||blink?.018:.095;}
   if(m==='scream')c.root.position.x+=Math.sin(t*60)*.02;
   const tr=c.head.userData.tear,ezf=c.head.userData.ez,tt=(t+e.tearOff)%3,TX=.2,EY=.08;
@@ -726,6 +730,12 @@ net.on(m=>{
       p.mode='sit';p.tx=p.x;p.tz=p.z;p.joined=typeof m.j==='string'&&m.j.length<=16?m.j:null;
     }
     else{p.mode='idle';p.joined=null;}
+  }else if(m.t==='hug'){
+    const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<4){p.x=sx;p.z=sz;}
+    p.tx=p.x;p.tz=p.z;p.mode='hug';p.modeT=0;p.pending=null;p.joined=null;
+    const tg=typeof m.to==='string'?(m.to===me.id?me:peers.get(m.to)):null;
+    if(tg){p.tyaw=Math.atan2(tg.x-p.x,tg.z-p.z);startHug(tg,p);}
+    spawnBubble(p,'♡',false,true);
   }else if(m.t==='bb'){
     const now=Date.now();
     if(now-p.lastBubble<PEER_MIN_BUBBLE_GAP)return;
@@ -800,17 +810,33 @@ function fireBubble(e,text,scream,local){
   spawnBubble(e,text,scream,local);
   if(e===me&&!local)net.send({t:'bb',id:me.id,k:scream?'s':'t',i:e.scIdx,text:scream?'':text});
 }
+function startHug(t,from){
+  if(t.mode==='sit'||t.mode==='scream'||t.mode==='cup')return;
+  t.mode='hug';t.modeT=0;t.tx=t.x;t.tz=t.z;t.pending=null;t.joined=null;t.tyaw=Math.atan2(from.x-t.x,from.z-t.z);
+  if(t===me){me.hug=null;me.join=null;hideJoin();}
+  spawnBubble(t,'♡',false,true);
+}
 function update(e,dt){
   e.t+=dt;
   if(e.mode==='scream'||e.mode==='cup'){
     e.modeT+=dt;
     if(e.pending&&e.modeT>=e.pending.at){const p=e.pending;e.pending=null;fireBubble(e,p.text,p.scream,p.local);}
     if(e.modeT>(e.mode==='scream'?1.5:1.7))e.mode='idle';
+  }else if(e.mode==='hug'){
+    e.modeT+=dt;if(e.modeT>3.8)e.mode='idle';
   }else if(e.mode!=='sit'){
     const dx=e.tx-e.x,dz=e.tz-e.z,d=Math.hypot(dx,dz);
     if(d>.08){const st=Math.min(d,SPEED*dt);e.x+=dx/d*st;e.z+=dz/d*st;e.tyaw=Math.atan2(dx,dz);e.mode='walk';}
     else{
       e.mode='idle';
+      if(e.hug){
+        const h=e.hug;e.hug=null;const g=peers.get(h.id);
+        if(g&&g.mode!=='sit'&&g.mode!=='scream'&&g.mode!=='cup'&&Math.hypot(g.x-e.x,g.z-e.z)<4.2){
+          e.tyaw=Math.atan2(g.x-e.x,g.z-e.z);e.mode='hug';e.modeT=0;
+          net.send({t:'hug',id:me.id,to:g.id,x:e.x,z:e.z,r:e.tyaw});
+          startHug(g,e);spawnBubble(e,'♡',false,true);
+        }else toast('지금은 안아주기 어려워요.',1600);
+      }
       if(e.join){const j=e.join;e.join=null;e.tyaw=j.yaw;e.joined=j.id;e.mode='sit';if(e===me)net.send({t:'an',id:me.id,a:'sit',j:j.id,x:e.x,z:e.z,r:e.tyaw});}
     }
   }
@@ -829,24 +855,42 @@ renderer.domElement.addEventListener('pointerdown',ev=>{
     const [fx,fy]=toScreen(f.g.position.x,f.g.position.y+2.5,f.g.position.z);
     if(Math.hypot(cx-fx,cy-fy)<Math.max(46,64*UK)){showJoin(p);return;}
   }
+  for(const p of peers.values()){
+    if(p.mode==='sit'||p.mode==='scream'||p.mode==='cup'||p.mode==='hug')continue;
+    const [px,py]=toScreen(p.x,topY(p.x,p.z)+2.4,p.z);
+    if(Math.hypot(cx-px,cy-py)<Math.max(34,46*UK)){showJoin(p,'hug');return;}
+  }
   hideJoin();
   ndc.set(ev.clientX/VW()*2-1,-(ev.clientY/VH())*2+1);ray.setFromCamera(ndc,camera);
   if(!ray.ray.intersectPlane(plane,hit))return;
   const [x,z]=clampTarget(hit.x,hit.z);
-  me.tx=x;me.tz=z;me.pending=null;me.join=null;me.joined=null;me.mode='walk';
+  me.tx=x;me.tz=z;me.pending=null;me.join=null;me.hug=null;me.joined=null;me.mode='walk';
   net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
 });
 let toastT=0;
 function toast(msg,ms=2600){const el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),ms);}
 /* 함께 불멍하기 */
-let joinTarget=null;const joinBtn=$('join');
-function showJoin(p){joinTarget=p;joinBtn.classList.add('on');placeJoin();}
+let joinTarget=null,joinKind='fire';const joinBtn=$('join'),joinTxt=joinBtn.querySelector('span');
+function showJoin(p,kind='fire'){joinTarget=p;joinKind=kind;joinTxt.textContent=kind==='hug'?'안아주기':'함께 불멍하기';joinBtn.classList.toggle('hug',kind==='hug');joinBtn.classList.add('on');placeJoin();}
 function hideJoin(){joinTarget=null;joinBtn.classList.remove('on');}
 function placeJoin(){
   const p=joinTarget;if(!p)return;
-  if(!peers.has(p.id)||!p.fire||p.mode!=='sit'||p.joined||p.fk<.5){hideJoin();return;}
-  const [sx,sy]=toScreen(p.fire.g.position.x,p.fire.g.position.y+5.2,p.fire.g.position.z);
+  let sx,sy;
+  if(joinKind==='hug'){
+    if(!peers.has(p.id)||p.mode==='sit'||p.mode==='scream'||p.mode==='cup'||p.mode==='hug'){hideJoin();return;}
+    [sx,sy]=toScreen(p.x,topY(p.x,p.z)+5.4,p.z);
+  }else{
+    if(!peers.has(p.id)||!p.fire||p.mode!=='sit'||p.joined||p.fk<.5){hideJoin();return;}
+    [sx,sy]=toScreen(p.fire.g.position.x,p.fire.g.position.y+5.2,p.fire.g.position.z);
+  }
   joinBtn.style.transform=`translate(${sx}px,${sy}px) translate(-50%,-100%)`;
+}
+function hugPeer(p){
+  let vx=me.x-p.x,vz=me.z-p.z;const len=Math.hypot(vx,vz);if(len<.01){vx=1;vz=0;}else{vx/=len;vz/=len;}
+  const [x,z]=clampTarget(p.x+vx*1.9,p.z+vz*1.9);
+  me.tx=x;me.tz=z;me.pending=null;me.join=null;me.joined=null;me.hug={id:p.id};me.mode='walk';
+  net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
+  toast('안아주러 가요.',1800);
 }
 function joinFire(p){
   const f=p.fire;if(!f)return;
@@ -862,12 +906,12 @@ function joinFire(p){
   toast('모닥불 옆으로 가서 함께 앉아요.',2200);
 }
 joinBtn.addEventListener('pointerdown',e=>e.stopPropagation());
-joinBtn.onclick=()=>{const p=joinTarget;hideJoin();if(p&&!full)joinFire(p);};
+joinBtn.onclick=()=>{const p=joinTarget,k=joinKind;hideJoin();if(p&&!full)(k==='hug'?hugPeer:joinFire)(p);};
 let cdUntil=0;
 const cdLeft=()=>Math.max(0,cdUntil-Date.now());
 function startAnim(mode,pending){
   if(mode==='scream'||mode==='cup')me.tyaw=Math.PI/2;
-  me.mode=mode;me.modeT=0;me.tx=me.x;me.tz=me.z;me.pending=pending;me.join=null;me.joined=null;
+  me.mode=mode;me.modeT=0;me.tx=me.x;me.tz=me.z;me.pending=pending;me.join=null;me.hug=null;me.joined=null;
   net.send({t:'an',id:me.id,a:mode,r:me.tyaw,x:me.x,z:me.z});
 }
 function ready(){if(full)return false;const c=cdLeft();if(c>0){toast(`${Math.ceil(c/1000)}초 후에 가능해요`,1500);return false;}return true;}
