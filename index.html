@@ -767,7 +767,7 @@ function makeFire(x,z){
 }
 function fireStep(e,dt){
   if(e.mode==='sit'){
-    if(!e.fire){const [fx,fz]=clampTarget(e.x+3.9,e.z-2.2);e.fire=makeFire(fx,fz);e.fk=0;}
+    if(!e.fire){const [fx,fz]=clampTarget(e.x+3.3,e.z-1.9);e.fire=makeFire(fx,fz);e.fk=0;}
     e.fk=Math.min(1,e.fk+dt*1.8);
   }else if(e.fire){
     e.fk=Math.max(0,e.fk-dt*2.4);
@@ -775,7 +775,7 @@ function fireStep(e,dt){
   }
   const f=e.fire;if(!f)return;
   const t=performance.now()/1000,k=e.fk,ease=k*k*(3-2*k);
-  f.g.scale.setScalar(2.1*(.15+.85*ease));
+  f.g.scale.setScalar(1.55*(.15+.85*ease));
   f.flames.forEach((m,i)=>{m.scale.set(1+.07*Math.sin(t*7+i),1+.15*Math.sin(t*9+m.userData.ph)+.07*Math.sin(t*15+i),1+.07*Math.cos(t*8+i));m.rotation.y+=dt*.8;});
   f.gl.material.opacity=.65*ease*(.85+.15*Math.sin(t*11));
   if(e===me){fireOwner=me;fireLight.position.set(f.g.position.x,f.g.position.y+3,f.g.position.z);fireLight.intensity=ease*(160+30*Math.sin(t*10));}
