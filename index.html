@@ -101,6 +101,7 @@ window.__showErr=show;})();
     <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/><ellipse cx="9" cy="10.6" rx="1.2" ry="1.5" fill="#fff" stroke="none"/><ellipse cx="15" cy="10.6" rx="1.2" ry="1.5" fill="#fff" stroke="none"/><path d="M15 12.9Q13.8 14.3 13.8 15.1A1.2 1.2 0 0 0 16.2 15.1Q16.2 14.3 15 12.9Z" fill="#fff" stroke="none"/></svg><span>소리지르기</span></button>
     <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 3.2c4.9 0 8.3 3.3 8.3 7.6s-3.4 7.6-8.3 7.6c-.5 0-1 0-1.5-.1L7.6 21v-3.7C5.3 16.4 3.7 14.1 3.7 10.8c0-4.3 3.4-7.6 8.3-7.6z" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/></svg><span>고민 날려보내기</span></button>
     <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/><path d="M12 8.8c-2.6 0-4.3.9-4.7 2.9-.2 1.1-.5 1.8-1.4 2.4C4.9 14.8 4.2 15.6 4.2 16.8c0 1.9 2.3 2.7 7.8 2.7s7.8-.8 7.8-2.7c0-1.2-.7-2-2.7-3.1-.9-.6-1.2-1.3-1.4-2.4-.4-2-2.1-2.9-4.7-2.9z" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/></svg><span>명상하기</span></button>
+    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.2 6 10.5A6 6 0 0 1 6 13.5C6 10.2 9 7 12 3z" fill="rgba(255,255,255,.4)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/></svg><span>울기</span></button>
   </div>
   <div id="info"></div>
   <div id="toast"></div>
@@ -634,7 +635,7 @@ function makeChar(L){
   return {root,g,legs,arms,head,mouth};
 }
 function animChar(e,dt){
-  const c=e.rig,m=e.mode,t=e.t,sit=m==='sit';
+  const c=e.rig,m=e.mode,t=e.t,cry=m==='cry',sit=m==='sit'||cry;
   let bob=0,sw=0;
   if(m==='walk'){const ph=t*14;sw=Math.sin(ph);bob=Math.abs(Math.sin(ph))*.14;}
   else if(m==='idle')bob=Math.sin(t*2)*.04;
@@ -643,7 +644,8 @@ function animChar(e,dt){
   c.g.position.y=bob-(sit?.62:0);
   const lerp=(a,b,k)=>a+(b-a)*k,k=Math.min(1,dt*14);
   const tgt={l0:0,l1:0,a0:0,a1:0,az:0,hx:0,hy:0,mouth:0};
-  if(m==='walk'){tgt.l0=sw*.7;tgt.l1=-sw*.7;tgt.a0=-sw*.8;tgt.a1=sw*.8;}
+  if(cry){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-2.5;tgt.a1=-2.5;tgt.az=.45+Math.sin(t*10)*.15;tgt.hx=.45;tgt.mouth=.35;}
+  else if(m==='walk'){tgt.l0=sw*.7;tgt.l1=-sw*.7;tgt.a0=-sw*.8;tgt.a1=sw*.8;}
   else if(sit){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-.3;tgt.a1=-.3;}
   else if(m==='scream'){tgt.a0=-2.9;tgt.a1=-2.9;tgt.hx=-.5;tgt.mouth=1;}
   else if(m==='pet'){tgt.a0=-1.0;tgt.a1=-.4;tgt.az=.2;tgt.hx=.3;tgt.mouth=.1;}
@@ -659,11 +661,12 @@ function animChar(e,dt){
   const closed=sit||m==='scream'||m==='hug',blink=(t%4)>3.88;
   for(const sx of [-1,1]){const eye=c.head.userData['eye'+sx];eye.scale.y=closed||blink?.018:.095;}
   if(m==='scream')c.root.position.x+=Math.sin(t*60)*.02;
-  const tr=c.head.userData.tear,ezf=c.head.userData.ez,tt=(t+e.tearOff)%3,TX=.2,EY=.08;
+  const tr=c.head.userData.tear,ezf=c.head.userData.ez,tt=((cry?t*2.4:t)+e.tearOff)%3,TX=.2,EY=.08;
   let ty=0,tz=0,ts=0,to=.95;
   if(tt<.4){const u=tt/.4;ty=EY-.1;ts=.35+.65*u;tz=ezf(TX,ty)+.03;}
   else if(tt<1.2){const u=(tt-.4)/.8;ty=EY-.1-u*.62;ts=1;tz=ezf(TX,ty)+.03;}
   else if(tt<1.8){const v=(tt-1.2)/.6;ty=EY-.72-v*v*1.5;ts=1;to=.95*(1-v);tz=ezf(TX,EY-.72)+.03+v*.1;}
+  if(!cry)ts=0;
   tr.visible=ts>0;
   if(ts>0){tr.position.set(TX,ty,tz);tr.scale.set(.085*ts,.14*ts,.06*ts);tr.material.opacity=to;}
 }
@@ -704,7 +707,7 @@ const bubbles=[];
 let full=false;const heard=new Set();
 const SB_URL='https://eayxuohlyqznxkrkepsp.supabase.co',SB_KEY='sb_publishable_8Rf0JIeEmhXHWfDpRehuxA_DxGDJxPl';
 const joinT=Date.now(),MAX_ROOMS=6;let roomNo=0;
-function setFull(){if(full)return;full=true;net.close();$('full').style.display='flex';for(const id of ['b1','b2','b3'])$(id).disabled=true;}
+function setFull(){if(full)return;full=true;net.close();$('full').style.display='flex';for(const id of ['b1','b2','b3','b4'])$(id).disabled=true;}
 const net=(()=>{
   let h=()=>{},ready=()=>{},ch=null,sb=null,live=false,bc=null;
   function open(){
@@ -775,7 +778,7 @@ net.on(m=>{
     p.mode='walk';p.pending=null;p.joined=null;
   }else if(m.t==='an'){
     p.tyaw=num(m.r,-7,7,p.tyaw);
-    if(m.a==='scream'||m.a==='cup'){p.mode=m.a;p.modeT=0;p.tx=p.x;p.tz=p.z;p.joined=null;}
+    if(m.a==='scream'||m.a==='cup'||m.a==='cry'){p.mode=m.a;p.modeT=0;p.tx=p.x;p.tz=p.z;p.joined=null;}
     else if(m.a==='sit'){
       const sx=num(m.x,-52,30,p.x),sz=num(m.z,-38,8,p.z);if(Math.hypot(p.x-sx,p.z-sz)<4){p.x=sx;p.z=sz;}
       p.mode='sit';p.tx=p.x;p.tz=p.z;p.joined=typeof m.j==='string'&&m.j.length<=16?m.j:null;
@@ -876,10 +879,10 @@ function startHug(t,from){
 }
 function update(e,dt){
   e.t+=dt;
-  if(e.mode==='scream'||e.mode==='cup'){
+  if(e.mode==='scream'||e.mode==='cup'||e.mode==='cry'){
     e.modeT+=dt;
     if(e.pending&&e.modeT>=e.pending.at){const p=e.pending;e.pending=null;fireBubble(e,p.text,p.scream,p.local);}
-    if(e.modeT>(e.mode==='scream'?1.5:1.7))e.mode='idle';
+    if(e.modeT>(e.mode==='scream'?1.5:e.mode==='cry'?4.5:1.7))e.mode='idle';
   }else if(e.mode==='pet'){
     e.modeT+=dt;if(e.modeT>4)e.mode='idle';
   }else if(e.mode==='hug'){
@@ -1074,6 +1077,13 @@ function startAnim(mode,pending){
 function ready(){if(full)return false;const c=cdLeft();if(c>0){toast(`${Math.ceil(c/1000)}초 후에 가능해요`,1500);return false;}return true;}
 $('b1').onclick=()=>{if(full||me.mode==='scream')return;const si=Math.floor(Math.random()*SCREAMS.length);me.scIdx=si;startAnim('scream',{at:.45,text:SCREAMS[si],scream:true});};
 $('b2').onclick=()=>{if(!ready())return;$('err').textContent='';$('txt').value='';$('cnt').textContent='0/50';$('modal').classList.add('on');setTimeout(()=>$('txt').focus(),50);};
+$('b4').onclick=()=>{
+  if(full||me.mode==='cry')return;
+  if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});}
+  me.tyaw=Math.atan2(camera.position.x-me.x,camera.position.z-me.z);
+  startAnim('cry',{at:.6,text:'엉엉 울고 털어 보내요',scream:false});
+  toast('엉엉 울고 나면 조금 가벼워질 거예요.',2200);
+};
 $('b3').onclick=()=>{
   if(full)return;
   if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});toast('다시 일어났어요.',1200);return;}
@@ -1190,7 +1200,7 @@ function frame(now){
   if(qp.has('closeup')){const gy=topY(me.x,me.z);camera.position.set(me.x+4,gy+3.8,me.z+8.5);camera.lookAt(me.x,gy+2.6,me.z);}
   renderer.render(scene,camera);
   acc+=dt;
-  if(acc>.25){acc=0;for(const id of ['b1','b2','b3'])$(id).disabled=full;$('info').textContent=`${THEME_NAMES[theme]} · 접속 ${peers.size+1}/${MAX_ROOM}${roomNo?` · ${roomNo+1}번 방`:''}`;}
+  if(acc>.25){acc=0;for(const id of ['b1','b2','b3','b4'])$(id).disabled=full;$('info').textContent=`${THEME_NAMES[theme]} · 접속 ${peers.size+1}/${MAX_ROOM}${roomNo?` · ${roomNo+1}번 방`:''}`;}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
