@@ -1015,8 +1015,8 @@ function applyFP(){
   me.rig.root.visible=true;
   if(!fpMode)return;
   const yaw=me.yaw+lookOff,fx=Math.sin(yaw),fz=Math.cos(yaw),gy=topY(me.x,me.z);
-  camera.position.set(me.x-fx*3.2,gy+4.6,me.z-fz*3.2);
-  camera.lookAt(me.x+fx*3,gy+2.2,me.z+fz*3);
+  camera.position.set(me.x-fx*15,gy+9,me.z-fz*15);
+  camera.lookAt(me.x,gy+2.4,me.z);
 }
 $('eye').addEventListener('pointerdown',e=>e.stopPropagation());
 $('eye').onclick=()=>{fpMode=!fpMode;lookOff=0;camYawMoved=true;toast(fpMode?'뒷모습 시점':'기본 시점',1400);};
