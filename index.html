@@ -65,22 +65,12 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #dbox .lead{margin:0 0 20px;font-size:14px;opacity:.85}
 #donate-qr{width:min(70vw,240px);height:auto;aspect-ratio:1/1;margin:0 auto 22px;border-radius:14px;display:block;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;pointer-events:auto}
 #dbox .by{margin:0 0 22px;font-size:12px;opacity:.6}
-#dbox #msg-open{width:100%;margin-top:4px}
 #donate-info{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.1);margin:0 0 20px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 #donate-info .tlogo{height:22px;width:22px;border-radius:6px;object-fit:cover}
 #donate-info .num{font-size:15px;font-weight:500;letter-spacing:.04em}
 #copy-acct{background:none;border:0;box-shadow:none;padding:2px 4px;font-size:11px;color:#fff;opacity:.5;text-decoration:underline;text-underline-offset:3px;cursor:pointer;width:auto}
 #donate-info .bank{font-size:13px;opacity:.85}
 #dbox h2{margin:0 0 14px;font-size:24px;line-height:1.35}
-#dbox .sub{margin:0 0 16px;font-size:14px;opacity:.85}
-#dbox .small{display:none;margin:18px 0 0;flex-direction:column;align-items:center}
-#donate.sent .small{display:flex}
-#donate.sent .beforeSend{display:none}
-#dbox .small #donate-qr{width:min(34vw,120px);margin:0 0 12px;padding:0}
-#dbox .small #donate-info{margin:0;padding:6px 10px;font-size:12px}
-#dbox .small .num{font-size:12px}
-#dbox .small .tlogo{height:16px;width:16px}
-#dbox .small .bank{font-size:11px}
 #dbox{padding:28px 24px 22px;border-radius:28px}
 #donate #dbox h2{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.4;margin:0 0 22px!important;padding:0 28px;word-break:keep-all}
 
@@ -111,21 +101,19 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #dbox #donate-info{flex-direction:row;margin:0 0 18px;padding:8px 10px;font-size:12px}
 #dbox .thanks p{margin:0 0 8px;font-size:13px;line-height:1.7;opacity:.85}
 #dbox .thanks .by{margin:12px 0 0;font-size:12px;opacity:.6}
-#dbox #msg-open.primary{background:linear-gradient(135deg,rgba(130,150,255,.55),rgba(100,120,230,.35))}
-#dmsgWrap{display:none;margin:0 0 12px}#dmsgWrap.on{display:block}
 #turn svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 #hint{position:absolute;z-index:4;left:50%;width:max-content;word-break:keep-all;top:calc(68px + env(safe-area-inset-top));transform:translate(-50%,-8px);max-width:min(92%,520px);font-size:14.5px;font-weight:300;line-height:1.6;text-align:center;color:#fff;opacity:0;transition:opacity .9s ease,transform .9s ease;pointer-events:none}
 #hint.on{opacity:1;transform:translate(-50%,0)}
 #modal,#donate{position:fixed;inset:0;background:rgba(10,20,40,.42);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
 #modal.on,#donate.on{display:flex}
-#box,#dbox,#mbox{width:min(100%,390px);border-radius:22px;padding:20px;background:linear-gradient(135deg,rgba(40,52,82,.62),rgba(25,32,56,.5));-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 60px rgba(0,0,0,.35)}
-#box,#dbox,#mbox{text-align:center}
-#box h2,#dbox h2,#mbox h2{font-weight:500;margin:0 0 4px;font-size:17px}
-#box p,#dbox p,#mbox p{margin:0 0 14px;font-size:13px;line-height:1.65;word-break:keep-all;opacity:.75}
-#txt,#dmsgTxt{width:100%;height:96px;resize:none;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.1);color:#fff;font:16px/1.5 inherit;font-family:inherit;padding:11px;text-align:center;-webkit-user-select:text;user-select:text}
-#txt::placeholder,#dmsgTxt::placeholder{color:rgba(255,255,255,.5)}
-#txt:placeholder-shown,#dmsgTxt:placeholder-shown{text-align:left}
-#txt:focus,#dmsgTxt:focus{outline:2px solid rgba(160,190,255,.7)}
+#box,#dbox{width:min(100%,390px);border-radius:22px;padding:20px;background:linear-gradient(135deg,rgba(40,52,82,.62),rgba(25,32,56,.5));-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#box,#dbox{text-align:center}
+#box h2,#dbox h2{font-weight:500;margin:0 0 4px;font-size:17px}
+#box p,#dbox p{margin:0 0 14px;font-size:13px;line-height:1.65;word-break:keep-all;opacity:.75}
+#txt{width:100%;height:96px;resize:none;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.1);color:#fff;font:16px/1.5 inherit;font-family:inherit;padding:11px;text-align:center;-webkit-user-select:text;user-select:text}
+#txt::placeholder{color:rgba(255,255,255,.5)}
+#txt:placeholder-shown{text-align:left}
+#txt:focus{outline:2px solid rgba(160,190,255,.7)}
 #row{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;margin-top:8px;font-size:12px;text-align:center}
 #err{color:#ffb0b0;min-height:1.3em}
 #acts{display:flex;gap:10px;justify-content:center;margin-top:10px}
@@ -333,7 +321,7 @@ function glowTex(r,g,b){
 const LOW=matchMedia('(pointer:coarse)').matches||Math.min(innerWidth,innerHeight)<700;
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 const MAXDPR=Math.min(devicePixelRatio||1,LOW?1.5:2);let dpr=MAXDPR,perfN=0,perfSum=0,perfOK=0;renderer.setPixelRatio(dpr);
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
 renderer.domElement.id='c';stage.prepend(renderer.domElement);
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(PAL.fog,70,330);
@@ -803,7 +791,7 @@ const net=(()=>{
       all.sort((a,b)=>a.t-b.t||(a.id<b.id?-1:1));
       if(all.findIndex(x=>x.id===me.id)>=MAX_ROOM)next();
     });
-    c.on('presence',{event:'leave'},e=>{if(c!==ch)return;(e.leftPresences||[]).forEach(x=>{if(x.id&&x.id!==me.id)removePeer(x.id);});});
+    // presence leave는 즉시 삭제하지 않음: 일시적 끊김 때 캐릭터가 사라졌다 다시 생기는 현상 방지 (실제 퇴장은 bye/TTL로 정리)
     c.subscribe(st=>{if(c===ch&&st==='SUBSCRIBED'){live=true;c.track({id:me.id,t:joinT});ready();}});
   }
   function next(){
@@ -845,7 +833,8 @@ net.on(m=>{
     if(!known&&peers.size>=MAX_ROOM-1){net.send(hello());return;}
     const p=getPeer(m);if(!p)return;
     const x=num(m.x,-52,30,p.x),z=num(m.z,-38,8,p.z);
-    if(!known||Math.hypot(p.x-x,p.z-z)>2){p.x=x;p.z=z;}
+    const dd=Math.hypot(p.x-x,p.z-z);
+    if(!known||dd>6){p.x=x;p.z=z;}else if(dd>1.2){p.x+=(x-p.x)*.5;p.z+=(z-p.z)*.5;}
     [p.tx,p.tz]=clampTarget(num(m.tx,-52,30,x),num(m.tz,-38,8,z));
     p.tyaw=num(m.r,-7,7,0);if(!known)p.yaw=p.tyaw;
     if(['idle','walk','sit'].includes(m.mode)){p.mode=m.mode;p.joined=m.mode==='sit'&&typeof m.j==='string'&&m.j.length<=16?m.j:null;}
@@ -1240,7 +1229,7 @@ window.addEventListener('pointerdown',e=>{
   for(let i=bottles.length-1;i>=0;i--){
     const B=bottles[i],[sx,sy]=toScreen(B.x,WATER+.6,B.z);
     if(Math.hypot(e.clientX-sx,e.clientY-sy)<80){
-      scene.remove(B.g);bottles.splice(i,1);
+      scene.remove(B.g);B.g.traverse(q=>{if(q.geometry)q.geometry.dispose();if(q.material)q.material.dispose();});bottles.splice(i,1);
       pickCopy();
       toast('이름모를 유리병을 발견했어요',2000);
       $('donate').classList.add('on');
