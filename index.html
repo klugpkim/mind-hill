@@ -939,23 +939,24 @@ const PET_WIN=90000,PET_LIFE=45000,PET_PROB=.35;
 const hash01=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);};
 const petMat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
 function buildPet(kind){
-  const cat=kind==='cat',c=cat?'#8c919c':'#c9955f',d=new THREE.Color(c).multiplyScalar(.72).getStyle();
-  const g=new THREE.Group(),legs=[];
-  const body=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),petMat(c));body.scale.set(.5,.42,.82);body.position.y=.5;g.add(body);
-  const head=new THREE.Group();head.position.set(0,.86,.62);g.add(head);
-  head.add(new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),petMat(c)));
+  // 단순한 로우폴리 조각: 앉은 자세, 짧은 꼬리
+  const cat=kind==='cat',c=cat?'#8f97a3':'#d08a4c',cream=cat?'#f2eee6':'#f6e8d2',dark='#2e2219';
+  const g=new THREE.Group();
+  const haunch=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),petMat(c));haunch.scale.set(.46,.4,.5);haunch.position.set(0,.36,-.08);g.add(haunch);
+  const chest=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),petMat(cream));chest.scale.set(.3,.42,.28);chest.position.set(0,.6,.22);g.add(chest);
+  const head=new THREE.Group();head.position.set(0,1.05,.4);g.add(head);
+  head.add(new THREE.Mesh(new THREE.IcosahedronGeometry(.3,0),petMat(c)));
   for(const sx of[-1,1]){
-    const ear=cat?new THREE.Mesh(new THREE.ConeGeometry(.12,.3,5),petMat(d)):new THREE.Mesh(new THREE.SphereGeometry(.14,8,6),petMat(d));
-    if(cat)ear.position.set(sx*.18,.38,0);else{ear.scale.set(.6,1.6,.7);ear.position.set(sx*.3,.02,-.05);}
-    head.add(ear);
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(.045,6,5),petMat('#1b2033'));eye.position.set(sx*.13,.07,.3);head.add(eye);
+    if(cat){const ear=new THREE.Mesh(new THREE.ConeGeometry(.12,.28,3),petMat(c));ear.position.set(sx*.17,.32,0);head.add(ear);}
+    else{const ear=new THREE.Mesh(new THREE.IcosahedronGeometry(.16,0),petMat('#8a4f2a'));ear.scale.set(.55,1.25,.55);ear.position.set(sx*.3,.02,-.02);head.add(ear);}
+    const eye=new THREE.Mesh(new THREE.IcosahedronGeometry(.045,0),petMat(dark));eye.position.set(sx*.11,.05,.27);head.add(eye);
   }
-  if(!cat){const sn=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),petMat('#efe3cf'));sn.position.set(0,-.08,.26);head.add(sn);}
-  const nose=new THREE.Mesh(new THREE.SphereGeometry(cat?.05:.09,6,5),petMat(cat?'#f0a0a8':'#1b2033'));nose.position.set(0,cat?-.02:-.06,cat?.34:.36);head.add(nose);
-  for(const [lx,lz] of [[-.28,.45],[.28,.45],[-.28,-.45],[.28,-.45]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.09,.08,.42,6),petMat(d));l.position.set(lx,.2,lz);g.add(l);legs.push(l);}
-  const tail=new THREE.Group();tail.position.set(0,.6,-.8);g.add(tail);
-  const tm=new THREE.Mesh(new THREE.CylinderGeometry(cat?.05:.1,cat?.07:.12,cat?.9:.6,6),petMat(d));tm.position.y=cat?.4:.22;tm.rotation.x=cat?-.9:-.3;tail.add(tm);
-  return {g,body,head,legs,tail};
+  const snout=new THREE.Mesh(new THREE.IcosahedronGeometry(.16,0),petMat(cream));snout.scale.set(1,.8,cat?1:1.35);snout.position.set(0,-.08,.26);head.add(snout);
+  const nose=new THREE.Mesh(new THREE.IcosahedronGeometry(.05,0),petMat(dark));nose.position.set(0,-.03,cat?.38:.42);head.add(nose);
+  for(const sx of[-1,1]){const pw=new THREE.Mesh(new THREE.IcosahedronGeometry(.1,0),petMat(dark));pw.scale.set(1,.55,1.3);pw.position.set(sx*.26,.04,.02);g.add(pw);}
+  const tail=new THREE.Group();tail.position.set(0,.36,-.42);g.add(tail);
+  const tm=new THREE.Mesh(new THREE.CylinderGeometry(.08,.11,.5,3),petMat(c));tm.position.set(0,.18,-.18);tm.rotation.x=-.9;tail.add(tm);
+  return {g,body:haunch,head,legs:[],tail};
 }
 let petRec=null;
 function dropPet(){
@@ -975,7 +976,7 @@ function updatePets(){
       const camA=Math.atan2(CAM_BASE.z-IC[1],CAM_BASE.x-IC[0]);
       let a=0,E=null;
       for(let j=0;j<16;j++){
-        a=camA+.2+hash01(w*31.7+j*4.1+7)*2.6;
+        a=camA+(hash01(w*31.7+j*4.1+7)-.5)*1.1;
         E=clampTarget(IC[0]+Math.cos(a)*200,IC[1]+Math.sin(a)*200);
         const [sx,sy]=toScreen(E[0],topY(E[0],E[1])+.5,E[1]);
         if(sx>VW()*.12&&sx<VW()*.88&&sy>VH()*.35&&sy<VH()*.92)break;
@@ -996,7 +997,7 @@ function updatePets(){
   p.x=p.S[0]+dx*e;p.z=p.S[1]+dz*e;
   p.g.position.set(p.x,topY(p.x,p.z),p.z);
   p.g.rotation.y=crawl?Math.atan2(dx,dz):Math.atan2(Math.cos(p.a),Math.sin(p.a));
-  P.body.position.y=crawl?.3:.5;
+  P.body.position.y=crawl?.12:.36;
   P.legs.forEach((l,i)=>{l.scale.y=crawl?1:.35;l.position.y=crawl?.12:.1;l.rotation.x=crawl?Math.sin(t*9+i*1.6)*.4:0;});
   const petted=now<p.petUntil;
   P.head.rotation.x=crawl?.3:0;
