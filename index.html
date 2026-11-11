@@ -95,9 +95,9 @@ window.__showErr=show;})();
   <div id="bubbles"></div>
   <div id="vig"></div>
   <div id="bar">
-    <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01" stroke-width="2.2"/><ellipse cx="12" cy="15.4" rx="2" ry="2.6"/></svg><span>소리지르기</span></button>
-    <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 2.8a8.5 8.5 0 1 1-4 16l-3.8 1.3 1.3-3.6A8.5 8.5 0 0 1 12 2.8z"/></svg><span>고민 날려보내기</span></button>
-    <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2.1"/><path d="M12 8c-2 0-3.2 1-3.6 2.8L7 15.4c-2 .7-3.5 1.7-3.5 3.1 0 1.2 1.3 2 3 2h11c1.7 0 3-.8 3-2 0-1.4-1.5-2.4-3.5-3.1l-1.4-4.6C15.2 9 14 8 12 8z"/><path d="M8.5 16.5c1 .7 2.2 1 3.5 1s2.5-.3 3.5-1"/></svg><span>명상하기</span></button>
+    <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="rgba(255,255,255,.3)"/><path d="M9 10h.01M15 10h.01" stroke-width="2.2"/><ellipse cx="12" cy="15.4" rx="2" ry="2.6" fill="#fff" stroke="none"/></svg><span>소리지르기</span></button>
+    <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 2.8a8.5 8.5 0 1 1-4 16l-3.8 1.3 1.3-3.6A8.5 8.5 0 0 1 12 2.8z" fill="rgba(255,255,255,.3)"/><circle cx="8.5" cy="11" r="1.2" fill="#fff" stroke="none"/><circle cx="12" cy="11" r="1.2" fill="#fff" stroke="none"/><circle cx="15.5" cy="11" r="1.2" fill="#fff" stroke="none"/></svg><span>고민 날려보내기</span></button>
+    <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2.1" fill="#fff" stroke="none"/><path d="M12 8c-2 0-3.2 1-3.6 2.8L7 15.4c-2 .7-3.5 1.7-3.5 3.1 0 1.2 1.3 2 3 2h11c1.7 0 3-.8 3-2 0-1.4-1.5-2.4-3.5-3.1l-1.4-4.6C15.2 9 14 8 12 8z" fill="rgba(255,255,255,.3)"/><path d="M8.5 16.5c1 .7 2.2 1 3.5 1s2.5-.3 3.5-1"/></svg><span>명상하기</span></button>
   </div>
   <div id="info"></div>
   <div id="toast"></div>
@@ -147,7 +147,7 @@ window.__showErr=show;})();
 </div>
 <script type="module">
 import * as THREE from 'three';
-const MAX_ROOM=20,COOLDOWN=10000,MAXLEN=50,SPEED=9;
+const MAX_ROOM=10,COOLDOWN=10000,MAXLEN=50,SPEED=9;
 const BUBBLE_LIFE=5.2,PEER_TTL=13000,HEARTBEAT=5000,PEER_MIN_BUBBLE_GAP=4500,PEER_MIN_SCREAM_GAP=1200;
 const SCREAMS=['악!!!!!!','으아아아악!!!!!!','이제 그만!!!!!!','속이 터질 것 같아!!!!!!','답답해!!!!!!','소리 지르고 싶어!!!!!!',
  '힘들어!!!!!!','진짜 지쳤어!!!!!!','제발 좀 쉬자!!!!!!','너무 피곤해!!!!!!','하루만 쉬고 싶어!!!!!!',
@@ -954,8 +954,14 @@ function hugPeer(p){
 function joinFire(p){
   const f=p.fire;if(!f)return;
   const fx=f.g.position.x,fz=f.g.position.z,vx=p.x-fx,vz=p.z-fz,len=Math.hypot(vx,vz)||1;
-  const cr=CAM_TARGET.x-camBase.x,cz=CAM_TARGET.z-camBase.z,cl=Math.hypot(cr,cz)||1;
-  const [x,z]=clampTarget(fx+(-cz/cl)*4,fz+(cr/cl)*4);
+  const cr=CAM_TARGET.x-camBase.x,cz=CAM_TARGET.z-camBase.z,cl=Math.hypot(cr,cz)||1,ux=-cz/cl,uz=cr/cl;
+  const others=[...peers.values()].filter(q=>q.id!==p.id&&q.id!==me.id).flatMap(q=>[[q.x,q.z],[q.tx,q.tz]]);
+  let spot=null;
+  for(const a of [0,.7,-.7,1.4,-1.4,2.1,-2.1]){
+    const c=Math.cos(a),sn=Math.sin(a),x=clampTarget(fx+(ux*c-uz*sn)*4,fz+(ux*sn+uz*c)*4);
+    if(!others.some(([ox,oz])=>Number.isFinite(ox)&&Math.hypot(ox-x[0],oz-x[1])<2.4)){spot=x;break;}
+  }
+  const [x,z]=spot||clampTarget(fx+ux*4,fz+uz*4);
   me.tx=x;me.tz=z;me.pending=null;me.joined=null;me.join={id:p.id,yaw:Math.atan2(fx-x,fz-z)};me.mode='walk';
   net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
   toast('모닥불 옆으로 가서 함께 앉아요.',2200);
