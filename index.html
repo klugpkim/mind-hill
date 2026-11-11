@@ -1012,14 +1012,14 @@ let camYaw=0,camYawS=0,camYawMoved=false;
 let fpMode=true,lookOff=0;
 function turnView(d){if(fpMode){lookOff=clamp(lookOff+d,-2.6,2.6);return;}camYaw=clamp(camYaw+d,-.75,.75);camYawMoved=true;}
 function applyFP(){
-  me.rig.root.visible=!fpMode;
+  me.rig.root.visible=true;
   if(!fpMode)return;
   const yaw=me.yaw+lookOff,fx=Math.sin(yaw),fz=Math.cos(yaw),gy=topY(me.x,me.z);
-  camera.position.set(me.x,gy+3.6,me.z);
-  camera.lookAt(me.x+fx*10,gy+3.0,me.z+fz*10);
+  camera.position.set(me.x-fx*3.2,gy+4.6,me.z-fz*3.2);
+  camera.lookAt(me.x+fx*3,gy+2.2,me.z+fz*3);
 }
 $('eye').addEventListener('pointerdown',e=>e.stopPropagation());
-$('eye').onclick=()=>{fpMode=!fpMode;lookOff=0;camYawMoved=true;toast(fpMode?'1인칭 시점':'3인칭 시점',1400);};
+$('eye').onclick=()=>{fpMode=!fpMode;lookOff=0;camYawMoved=true;toast(fpMode?'뒷모습 시점':'기본 시점',1400);};
 $('vl').onclick=()=>turnView(-.3);$('vr').onclick=()=>turnView(.3);
 addEventListener('keydown',e=>{if($('modal').classList.contains('on')||e.target.tagName==='TEXTAREA')return;if(e.key==='ArrowLeft')turnView(-.3);else if(e.key==='ArrowRight')turnView(.3);});
 let PORTRAIT=false,CHARBOOST=1,REFD=87;const _cd=new THREE.Vector3(),_cd2=new THREE.Vector3();const camBase=new THREE.Vector3(),camOff=new THREE.Vector3(),tgtTmp=new THREE.Vector3();
