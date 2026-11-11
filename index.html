@@ -993,14 +993,19 @@ $('cancel').onclick=()=>$('modal').classList.remove('on');
 $('coffee').onclick=()=>$('donate').classList.add('on');
 $('coffee').addEventListener('pointerdown',e=>e.stopPropagation());
 const bgmA=$('bgmA');
-let bgmCtx=null;
+let bgmCtx=null,bgmG=null;const BGM_VOL=.15;
 function bgmSetup(){
   if(bgmCtx)return;
   try{
     bgmCtx=new(window.AudioContext||window.webkitAudioContext)();
-    const g=bgmCtx.createGain();g.gain.value=.15;
+    const g=bgmCtx.createGain();g.gain.value=0;bgmG=g;
     bgmCtx.createMediaElementSource(bgmA).connect(g).connect(bgmCtx.destination);
-  }catch(e){bgmCtx=null;bgmA.volume=.2;}
+    setInterval(()=>{
+      const d=bgmA.duration,t=bgmA.currentTime;if(!bgmG||bgmA.paused||!isFinite(d)||d<=0)return;
+      const F=1.5;let v=BGM_VOL;if(t<F)v*=Math.max(0,t/F);if(d-t<F)v*=Math.max(0,(d-t)/F);
+      bgmG.gain.setTargetAtTime(v,bgmCtx.currentTime,.05);
+    },100);
+  }catch(e){bgmCtx=null;bgmG=null;bgmA.volume=.2;}
 }
 let bgmOn=true;try{bgmOn=localStorage.getItem('bgm')!=='off';}catch(e){}
 const BGM_ON='<svg viewBox="0 0 24 24"><path d="M4 9.5h3l4.5-3.5v12L7 14.5H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
@@ -1037,7 +1042,7 @@ function resize(){
   const w=VW(),h=VH(),asp=w/h;PORTRAIT=asp<.9;
   renderer.setSize(w,h,false);
   const shift=PORTRAIT?.12:.3,k=PORTRAIT?1:Math.max(1,1.36/asp);
-  camera.fov=PORTRAIT?62:46;
+  camera.fov=PORTRAIT?50:46;
   camBase.copy(CAM_TARGET).add(CAM_BASE.clone().sub(CAM_TARGET).multiplyScalar(k));
   camera.position.copy(camBase);camera.lookAt(CAM_TARGET);REFD=camBase.distanceTo(CAM_TARGET)*.95;
   camera.aspect=w/(h*(1+shift));camera.setViewOffset(w,h*(1+shift),0,0,w,h);camera.updateProjectionMatrix();
