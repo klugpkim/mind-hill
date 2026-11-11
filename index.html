@@ -943,12 +943,8 @@ function hugPeer(p){
 function joinFire(p){
   const f=p.fire;if(!f)return;
   const fx=f.g.position.x,fz=f.g.position.z,vx=p.x-fx,vz=p.z-fz,len=Math.hypot(vx,vz)||1;
-  let best=null,bd=1e9;
-  for(const a of [Math.PI/2,-Math.PI/2]){
-    const c=Math.cos(a),sn=Math.sin(a),dx=(vx*c-vz*sn)/len*4,dz=(vx*sn+vz*c)/len*4,[x,z]=clampTarget(fx+dx,fz+dz),d=Math.hypot(x-me.x,z-me.z);
-    if(d<bd){bd=d;best=[x,z];}
-  }
-  const [x,z]=best;
+  const cr=CAM_TARGET.x-camBase.x,cz=CAM_TARGET.z-camBase.z,cl=Math.hypot(cr,cz)||1;
+  const [x,z]=clampTarget(fx+(-cz/cl)*4,fz+(cr/cl)*4);
   me.tx=x;me.tz=z;me.pending=null;me.joined=null;me.join={id:p.id,yaw:Math.atan2(fx-x,fz-z)};me.mode='walk';
   net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
   toast('모닥불 옆으로 가서 함께 앉아요.',2200);
