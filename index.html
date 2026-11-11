@@ -52,26 +52,71 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #turn{position:absolute;z-index:3;display:flex;gap:8px;right:calc((100% - var(--navw)) / 2 + 14px);bottom:calc(var(--nav) + 26px + env(safe-area-inset-bottom))}
 #turn button{width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
 #turn button:hover,#turn button:active{opacity:.95;background:rgba(255,255,255,.22)}
-#coffee{position:absolute;z-index:3;left:calc((100% - var(--navw)) / 2 + 14px);bottom:calc(var(--nav) + 26px + env(safe-area-inset-bottom));width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
-#bgm{position:absolute;z-index:3;bottom:calc(var(--nav) + 26px + env(safe-area-inset-bottom));left:calc((100% - var(--navw)) / 2 + 60px);width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
+#bgm{position:absolute;z-index:3;bottom:calc(var(--nav) + 26px + env(safe-area-inset-bottom));left:calc((100% - var(--navw)) / 2 + 14px);width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
 #bgm:hover,#bgm:active{opacity:.95;background:rgba(255,255,255,.22)}
 #bgm svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-#coffee:hover,#coffee:active{opacity:.95;background:rgba(255,255,255,.22)}
-#coffee svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-#donate-info{font-size:13px;line-height:1.6;padding:14px;border-radius:14px;background:rgba(255,255,255,.1);margin:0 0 14px;opacity:.85}
+#donate #dbox{position:relative;max-height:90vh;overflow:auto;padding:24px 22px 18px;width:min(88vw,300px)!important}
+#donate-x svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:.8;stroke-linecap:round}
+#donate-x{position:absolute;top:14px;right:14px;width:auto;height:auto;padding:6px;border:0;border-radius:0;background:none;color:#fff;opacity:.7;line-height:1;cursor:pointer;box-shadow:none}
+#dbox .lead{margin:0 0 20px;font-size:14px;opacity:.85}
+#donate-qr{width:min(70vw,240px);height:auto;aspect-ratio:1/1;margin:0 auto 22px;border-radius:14px;display:block;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;pointer-events:auto}
+#dbox .by{margin:0 0 22px;font-size:12px;opacity:.6}
+#dbox #msg-open{width:100%;margin-top:4px}
+#donate-info{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.1);margin:0 0 20px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+#donate-info .tlogo{height:22px;width:22px;border-radius:6px;object-fit:cover}
+#donate-info .num{font-size:15px;font-weight:500;letter-spacing:.04em}
+#copy-acct{background:none;border:0;box-shadow:none;padding:2px 4px;font-size:11px;color:#fff;opacity:.5;text-decoration:underline;text-underline-offset:3px;cursor:pointer;width:auto}
+#donate-info .bank{font-size:13px;opacity:.85}
+#dbox h2{margin:0 0 14px;font-size:24px;line-height:1.35}
+#dbox .sub{margin:0 0 16px;font-size:14px;opacity:.85}
+#dbox .small{display:none;margin:18px 0 0;flex-direction:column;align-items:center}
+#donate.sent .small{display:flex}
+#donate.sent .beforeSend{display:none}
+#dbox .small #donate-qr{width:min(34vw,120px);margin:0 0 12px;padding:0}
+#dbox .small #donate-info{margin:0;padding:6px 10px;font-size:12px}
+#dbox .small .num{font-size:12px}
+#dbox .small .tlogo{height:16px;width:16px}
+#dbox .small .bank{font-size:11px}
+#dbox{padding:28px 24px 22px;border-radius:28px}
+#donate #dbox h2{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.4;margin:0 0 22px!important;padding:0 28px;word-break:keep-all}
+
+#dbox #donate-info{background:none;border-radius:0;padding:0;margin:0;font-size:13px;gap:8px}
+#dbox #donate-info .num{font-size:14px;font-weight:600}
+#dbox #donate-info .tlogo{border-radius:0}
+#dbox #copy-acct{background:none;border:0;box-shadow:none;color:#fff;opacity:.5;font-size:11px;font-weight:400;padding:2px 4px;border-radius:0;text-decoration:underline;text-underline-offset:3px;margin-left:4px}
+#dbox .thanks{display:block;margin:0 0 28px;text-align:center}
+#dbox .thanks .lead{font-size:14px;line-height:1.7;opacity:.92;margin:0 auto 10px;max-width:250px;word-break:keep-all;text-wrap:balance}
+#dbox .thanks .by{font-size:12px;opacity:.6;margin:0}
+#dbox .paybox{width:212px;margin:0 auto;padding:16px;box-sizing:border-box;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+#donate #dbox .paybox #donate-qr{width:180px!important;height:180px!important;aspect-ratio:1/1;margin:0 0 14px;padding:0;border-radius:0;object-fit:contain}
+#dbox .paybox #donate-info{width:100%;box-sizing:border-box;display:block;margin:0;padding:0;text-align:left}
+#dbox .acctrow{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;width:100%}
+#dbox .acctrow .tlogo{height:16px;width:16px;flex:none}
+#dbox .acctrow .bank{font-size:12px;opacity:.85}
+#dbox .acctrow .num{font-size:12px;font-weight:600;letter-spacing:.02em}
+#dbox #copy-acct{display:block;margin:8px auto 0;font-size:11px}
+#dbox .sign{margin:18px 0 0;text-align:center}
+#dbox .sign p{margin:0 0 6px;font-size:12px;line-height:1.7;opacity:.6}
+#dbox .sign .by{margin:0}
+
+#dbox #donate-info{flex-direction:row;margin:0 0 18px;padding:8px 10px;font-size:12px}
+#dbox .thanks p{margin:0 0 8px;font-size:13px;line-height:1.7;opacity:.85}
+#dbox .thanks .by{margin:12px 0 0;font-size:12px;opacity:.6}
+#dbox #msg-open.primary{background:linear-gradient(135deg,rgba(130,150,255,.55),rgba(100,120,230,.35))}
+#dmsgWrap{display:none;margin:0 0 12px}#dmsgWrap.on{display:block}
 #turn svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 #hint{position:absolute;z-index:4;left:50%;width:max-content;word-break:keep-all;top:calc(68px + env(safe-area-inset-top));transform:translate(-50%,-8px);max-width:min(92%,520px);font-size:14.5px;font-weight:300;line-height:1.6;text-align:center;color:#fff;opacity:0;transition:opacity .9s ease,transform .9s ease;pointer-events:none}
 #hint.on{opacity:1;transform:translate(-50%,0)}
 #modal,#donate{position:fixed;inset:0;background:rgba(10,20,40,.42);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
 #modal.on,#donate.on{display:flex}
-#box,#dbox{width:min(100%,390px);border-radius:22px;padding:20px;background:linear-gradient(135deg,rgba(40,52,82,.62),rgba(25,32,56,.5));-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 60px rgba(0,0,0,.35)}
-#box,#dbox{text-align:center}
-#box h2,#dbox h2{font-weight:500;margin:0 0 4px;font-size:17px}
-#box p,#dbox p{margin:0 0 14px;font-size:13px;line-height:1.65;word-break:keep-all;opacity:.75}
-#txt{width:100%;height:96px;resize:none;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.1);color:#fff;font:16px/1.5 inherit;font-family:inherit;padding:11px;text-align:center;-webkit-user-select:text;user-select:text}
-#txt::placeholder{color:rgba(255,255,255,.5)}
-#txt:placeholder-shown{text-align:left}
-#txt:focus{outline:2px solid rgba(160,190,255,.7)}
+#box,#dbox,#mbox{width:min(100%,390px);border-radius:22px;padding:20px;background:linear-gradient(135deg,rgba(40,52,82,.62),rgba(25,32,56,.5));-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#box,#dbox,#mbox{text-align:center}
+#box h2,#dbox h2,#mbox h2{font-weight:500;margin:0 0 4px;font-size:17px}
+#box p,#dbox p,#mbox p{margin:0 0 14px;font-size:13px;line-height:1.65;word-break:keep-all;opacity:.75}
+#txt,#dmsgTxt{width:100%;height:96px;resize:none;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.1);color:#fff;font:16px/1.5 inherit;font-family:inherit;padding:11px;text-align:center;-webkit-user-select:text;user-select:text}
+#txt::placeholder,#dmsgTxt::placeholder{color:rgba(255,255,255,.5)}
+#txt:placeholder-shown,#dmsgTxt:placeholder-shown{text-align:left}
+#txt:focus,#dmsgTxt:focus{outline:2px solid rgba(160,190,255,.7)}
 #row{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;margin-top:8px;font-size:12px;text-align:center}
 #err{color:#ffb0b0;min-height:1.3em}
 #acts{display:flex;gap:10px;justify-content:center;margin-top:10px}
@@ -107,10 +152,9 @@ window.__showErr=show;})();
   <div id="toast"></div>
   <button id="join"><svg viewBox="0 0 24 24"><path d="M12 3c.6 3.200-3.500 5-3.500 9.200a3.500 3.500 0 0 0 7 0C15.500 9.500 13 7 12 3z"/><path d="M5 21h14"/></svg><svg class="ht" viewBox="0 0 24 24"><path d="M12 20s-7.500-4.500-7.500-10A4.200 4.200 0 0 1 12 7.500 4.200 4.200 0 0 1 19.500 10C19.500 15.500 12 20 12 20z"/></svg><span>함께 불멍하기</span></button>
   <div id="hint">모든 내용은 저 언덕 너머로 날아가요,<br>안심하고 고민을 털어놓아 봐요</div>
-  <div id="turn"><button id="vl" aria-label="왼쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M14.500 5.500 8 12l6.500 6.500"/></svg></button><button id="vr" aria-label="오른쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M9.500 5.500 16 12l-6.500 6.500"/></svg></button></div>
   <button id="bgm" aria-label="배경음악 켜기/끄기"></button>
+  <div id="turn"><button id="vl" aria-label="왼쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M14.500 5.500 8 12l6.500 6.500"/></svg></button><button id="vr" aria-label="오른쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M9.500 5.500 16 12l-6.500 6.500"/></svg></button></div>
   <audio id="bgmA" src="bgm.mp3" loop preload="auto"></audio>
-  <button id="coffee" aria-label="후원하기"><svg viewBox="0 0 24 24"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3c-.8 1 .8 1.8 0 3M12 3c-.8 1 .8 1.8 0 3"/></svg></button>
   <div id="full">지금은 언덕이 가득 찼어요.<br>잠시 후에 다시 와주세요.</div>
   <div id="loading">
     <svg viewBox="0 0 204 84" aria-hidden="true">
@@ -145,10 +189,22 @@ window.__showErr=show;})();
 </div>
 <div id="donate">
   <div id="dbox">
-    <h2>언덕을 응원해 주세요</h2>
-    <p>후원은 언덕을 계속 유지하는 데 쓰여요.<br>마음이 닿는다면 작은 후원을 보내 주세요.</p>
-    <div id="donate-info">후원 계좌 또는 링크는 아직 준비 중이에요.</div>
-    <div id="acts"><button class="btn glass" id="donate-close">닫기</button></div>
+    <button id="donate-x" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h2>후원은 만든이에게 위로가 됩니다</h2>
+    <div class="thanks">
+      <p class="lead">고요한 언덕에 평온을 찾길 바라며...</p>
+    </div>
+    <div class="paybox">
+      <img id="donate-qr" src="donate-qr.png" alt="토스 후원 QR" draggable="false" oncontextmenu="return false">
+      <div id="donate-info">
+        <div class="acctrow"><img class="tlogo" src="toss-logo.webp" alt="토스" draggable="false"><span class="bank">토스</span><span class="num">1000-0896-5072</span></div>
+        <button id="copy-acct">복사</button>
+      </div>
+    </div>
+    <div class="sign">
+      <p>고요한 언덕에서 모든이가 평온함을 찾기를...</p>
+      <p class="by">- 만든이 KUNIL KIM -</p>
+    </div>
   </div>
 </div>
 <script type="module">
@@ -1107,8 +1163,6 @@ $('b3').onclick=()=>{
 };
 $('txt').addEventListener('input',()=>{$('cnt').textContent=$('txt').value.length+'/50';$('err').textContent='';});
 $('cancel').onclick=()=>$('modal').classList.remove('on');
-$('coffee').onclick=()=>$('donate').classList.add('on');
-$('coffee').addEventListener('pointerdown',e=>e.stopPropagation());
 const bgmA=$('bgmA');
 let bgmCtx=null,bgmG=null;const BGM_VOL=.15;
 function bgmSetup(){
@@ -1133,7 +1187,58 @@ addEventListener('pointerdown',()=>bgmPlay(),{once:true});
 $('bgm').addEventListener('pointerdown',e=>e.stopPropagation());
 $('bgm').onclick=()=>{bgmOn=!bgmOn;try{localStorage.setItem('bgm',bgmOn?'on':'off');}catch(e){}bgmOn?bgmPlay():bgmA.pause();bgmIcon();};
 bgmIcon();
-$('donate-close').onclick=()=>$('donate').classList.remove('on');
+$('donate-x').onclick=()=>$('donate').classList.remove('on');
+/* 이름 모를 유리병: 접속하면 멀리 바다에서 흘러들어와, 발견할 때까지 바다 주변을 떠다님 */
+let bottles=[];
+const seaAngle=()=>{const camA=Math.atan2(camera.position.z-IC[1],camera.position.x-IC[0]);return camA+(Math.random()-.5)*2.2;};
+function bottleWaypoint(B){
+  const a=seaAngle(),r=1.25+Math.random()*.4;
+  B.tx=IC[0]+Math.cos(a)*IRX*r;B.tz=IC[1]+Math.sin(a)*IRZ*r;
+}
+function spawnBottle(){
+  const g=new THREE.Group();
+  const glass=new THREE.MeshLambertMaterial({color:'#cfeeff',transparent:true,opacity:.72,flatShading:true});
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.32,.36,.7,8),glass);body.position.y=.35;g.add(body);
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,.25,8),glass);neck.position.y=.82;g.add(neck);
+  const cork=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.14,8),petMat('#b8864e'));cork.position.y=1.0;g.add(cork);
+  const paper=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.45,8),petMat('#f6ecd2'));paper.position.y=.35;g.add(paper);
+  g.scale.setScalar(2.1);scene.add(g);
+  const a=seaAngle(),far=2.1;
+  const B={g,x:IC[0]+Math.cos(a)*IRX*far,z:IC[1]+Math.sin(a)*IRZ*far,tx:0,tz:0,t:0,seed:Math.random()*10};
+  bottleWaypoint(B);
+  bottles.push(B);
+}
+function updateBottle(dt){
+  for(const B of bottles){B.t+=dt;
+  const dx=B.tx-B.x,dz=B.tz-B.z,d=Math.hypot(dx,dz),sp=2.8*dt;
+  if(d>sp){B.x+=dx/d*sp;B.z+=dz/d*sp;}else bottleWaypoint(B);
+  B.g.position.set(B.x,WATER+.2+Math.sin(B.t*2+B.seed)*.08,B.z);
+  B.g.rotation.z=Math.sin(B.t*1.3+B.seed)*.14;
+  }
+}
+/* 팝업 문구: 제목과 본문이 짝을 이룬 10쌍 중 무작위 */
+const POP_PAIRS=[["오늘도 수고했어요,<br>이 언덕에서 쉬어 가세요", "여기서 조금 가벼워졌다면, 용돈 한 푼으로 마음을 전해 보세요."], ["바람이 쉬어 가듯<br>당신도 잠시 머물다 가요", "쉬어 간 자리에 고마움이 남았다면, 작은 마음을 얹어 주세요."], ["무거운 마음은 여기 두고<br>가벼운 걸음으로 가세요", "내려놓은 무게만큼, 용돈 같은 가벼운 응원을 얹어 주실래요?"], ["괜찮아요,<br>오늘은 그냥 머물러도 돼요", "머문 시간이 좋았다면, 이 언덕이 계속 열려 있게 해 주세요."], ["당신의 하루가<br>조금 가벼워졌기를", "가벼워진 만큼, 만든이의 하루에도 작은 온기를 나눠 주세요."], ["지친 마음도<br>이 언덕에선 쉬어 갑니다", "쉼을 준 이 자리를 지키는 데, 작은 마음 하나면 충분해요."], ["오늘 하루,<br>정말 수고했어요", "수고한 나에게 주는 선물처럼, 만든이에게도 용돈 한 번을 주세요."], ["별빛처럼 작은 마음이<br>언덕을 밝힙니다", "그 빛이 오래가도록, 작은 마음을 보태 주실 수 있을까요?"], ["누군가의 쉼터가<br>되어 주셔서 고마워요", "쉼을 준 이 언덕에 고마움을 전하는 가장 가벼운 방법이 있어요."], ["흘러온 유리병처럼<br>당신의 마음도 닿기를", "닿은 마음이 따뜻했다면, 작은 용돈으로 그 온기를 돌려주세요."], ["괜찮다고,<br>오늘도 말해 줄게요", "그 말이 위로였다면, 이번엔 당신이 만든이에게 말해 주세요."], ["쉬어 가는 것도<br>하나의 용기예요", "그 용기를 응원하는 마음으로, 작은 마음을 얹어 주세요."], ["당신이 놓고 간 마음,<br>잘 간직할게요", "간직한 마음에 답하듯, 만든이에게 커피 한 잔의 인사를 남겨요."], ["오늘의 나에게<br>작은 선물을", "나에게 준 선물처럼, 만든이에게도 작은 용돈 선물을 건네 보세요."]];
+function pickCopy(){
+  const [t,b]=POP_PAIRS[Math.random()*POP_PAIRS.length|0];
+  $('donate').querySelector('h2').innerHTML=t;
+  $('donate').querySelector('.lead').textContent=b;
+}
+window.addEventListener('pointerdown',e=>{
+  for(let i=bottles.length-1;i>=0;i--){
+    const B=bottles[i],[sx,sy]=toScreen(B.x,WATER+.6,B.z);
+    if(Math.hypot(e.clientX-sx,e.clientY-sy)<80){
+      scene.remove(B.g);bottles.splice(i,1);
+      pickCopy();
+      toast('이름모를 유리병을 발견했어요',2000);
+      $('donate').classList.add('on');
+      return;
+    }
+  }
+});
+for(let i=0;i<3;i++)spawnBottle();
+// 병은 계속 흘러들어옴: 3개 미만이면 다시 보충
+setInterval(()=>{if(bottles.length<3)spawnBottle();},5000);
+$('copy-acct').onclick=async()=>{const t='100008965072';try{await navigator.clipboard.writeText(t);toast('계좌번호를 복사했어요.',1600);}catch(e){toast('복사하지 못했어요. 직접 선택해 주세요.',2000);}};
 $('donate').addEventListener('pointerdown',e=>{if(e.target===$('donate'))$('donate').classList.remove('on');});
 $('modal').addEventListener('pointerdown',e=>{if(e.target===$('modal'))$('modal').classList.remove('on');});
 function submit(){
@@ -1186,7 +1291,7 @@ function frame(now){
     camYawMoved=Math.abs(camYaw-camYawS)>.0005;
     const bx=camBase.x-CAM_TARGET.x,bz=camBase.z-CAM_TARGET.z,c=Math.cos(camYawS),sn=Math.sin(camYawS);
     camera.position.set(CAM_TARGET.x+camOff.x+bx*c+bz*sn,camBase.y,CAM_TARGET.z+camOff.z-bx*sn+bz*c);
-    tgtTmp.copy(CAM_TARGET).add(camOff);camera.lookAt(tgtTmp);
+    tgtTmp.copy(CAM_TARGET).add(camOff);if(PORTRAIT)tgtTmp.y+=2.5;camera.lookAt(tgtTmp);
   }
   camera.getWorldDirection(_cd);
   {const all=[me,...peers.values()];for(const e of all){e.sx=0;e.sz=0;}
@@ -1194,6 +1299,7 @@ function frame(now){
      if(d<SEP_D&&d>1e-3){const k=(SEP_D-d)/2/d;a.sx-=dx*k;a.sz-=dz*k;b.sx+=dx*k;b.sz+=dz*k;}}}
   update(me,dt);for(const p of peers.values())update(p,dt);
   updatePets();
+  updateBottle(dt);
   placeJoin();
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
