@@ -99,9 +99,9 @@ window.__showErr=show;})();
   <div id="vig"></div>
   <div id="bar">
     <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/><ellipse cx="9" cy="10.6" rx="1.2" ry="1.5" fill="#fff" stroke="none"/><ellipse cx="15" cy="10.6" rx="1.2" ry="1.5" fill="#fff" stroke="none"/><path d="M15 12.9Q13.8 14.3 13.8 15.1A1.2 1.2 0 0 0 16.2 15.1Q16.2 14.3 15 12.9Z" fill="#fff" stroke="none"/></svg><span>소리지르기</span></button>
-    <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 3.2c4.9 0 8.3 3.3 8.3 7.6s-3.4 7.6-8.3 7.6c-.5 0-1 0-1.5-.1L7.6 21v-3.7C5.3 16.4 3.7 14.1 3.7 10.8c0-4.3 3.4-7.6 8.3-7.6z" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/></svg><span>고민 날려보내기</span></button>
+    <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 3.2c4.9 0 8.3 3.3 8.3 7.6s-3.4 7.6-8.3 7.6c-.5 0-1 0-1.5-.1L7.6 21v-3.7C5.3 16.4 3.7 14.1 3.7 10.8c0-4.3 3.4-7.6 8.3-7.6z" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/></svg><span>고민 날리기</span></button>
     <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/><path d="M12 8.8c-2.6 0-4.3.9-4.7 2.9-.2 1.1-.5 1.8-1.4 2.4C4.9 14.8 4.2 15.6 4.2 16.8c0 1.9 2.3 2.7 7.8 2.7s7.8-.8 7.8-2.7c0-1.2-.7-2-2.7-3.1-.9-.6-1.2-1.3-1.4-2.4-.4-2-2.1-2.9-4.7-2.9z" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/></svg><span>명상하기</span></button>
-    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.2 6 10.5A6 6 0 0 1 6 13.5C6 10.2 9 7 12 3z" fill="rgba(255,255,255,.4)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/></svg><span>울며 털어보내기</span></button>
+    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.2 6 10.5A6 6 0 0 1 6 13.5C6 10.2 9 7 12 3z" fill="rgba(255,255,255,.4)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/></svg><span>울기</span></button>
   </div>
   <div id="info"></div>
   <div id="toast"></div>
@@ -551,9 +551,15 @@ function makeChar(L){
   const legs=[],arms=[];
   for(const sx of [-1,1]){
     const lg=new THREE.Group();lg.position.set(sx*.26,1.05,0);g.add(lg);
-    add(lg,cap,L.pants,0,-.45,0,.17,.3,.17);add(lg,sph,L.boot,0,-.9,.1,.25,.17,.38);legs.push(lg);
+    add(lg,cap,L.pants,0,-.22,0,.17,.15,.17);
+    const sh=new THREE.Group();sh.position.set(0,-.45,0);lg.add(sh);
+    add(sh,cap,L.pants,0,-.22,0,.17,.15,.17);add(sh,sph,L.boot,0,-.45,.1,.25,.17,.38);
+    lg.userData.knee=sh;legs.push(lg);
     const ar=new THREE.Group();ar.position.set(sx*.68,1.82,0);g.add(ar);
-    add(ar,cap,L.body,0,-.32,0,.13,.24,.13);add(ar,sph,L.accent,0,-.7,0,.18,.18,.18);arms.push(ar);
+    add(ar,cap,L.body,0,-.18,0,.13,.14,.13);
+    const fa=new THREE.Group();fa.position.set(0,-.36,0);ar.add(fa);
+    add(fa,cap,L.body,0,-.18,0,.13,.14,.13);add(fa,sph,L.accent,0,-.4,0,.18,.18,.18);
+    ar.userData.elbow=fa;arms.push(ar);
   }
   add(g,sph,L.body,0,1.52,0,.64,.6,.56);
   const cone=(r,h,col,x,y,z,rx=0,ry=0,rz=0,seg=24)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg),toon(col));m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=true;g.add(m);return m;};
@@ -642,15 +648,15 @@ function animChar(e,dt){
   else if(sit)bob=Math.sin(t*1.4)*.03;
   else if(m==='hug')bob=Math.sin(t*2.6)*.04;
   e.lieAm=(e.lieAm||0)+((cry?1:0)-(e.lieAm||0))*Math.min(1,dt*5);
-  c.g.position.y=bob-((m==='sit'||cry)?.62:0);
-  c.g.rotation.x=0;
+  c.g.position.y=bob-((m==='sit')?.62:0)-(cry?.3:0)+(cry?Math.sin(t*16)*.01:0);
+  c.g.rotation.x=cry?.85:0;
   // 바닥에 고이는 눈물 웅덩이
   e.cryT=cry?(e.cryT||0)+dt:Math.max(0,(e.cryT||0)-dt*1.5);
   if(e.cryT>0&&!e.puddle){const pg=new THREE.CircleGeometry(1,18);e.puddle=new THREE.Mesh(pg,new THREE.MeshBasicMaterial({color:'#8fcdf5',transparent:true,opacity:.6,depthWrite:false}));e.puddle.rotation.x=-Math.PI/2;scene.add(e.puddle);}
-  if(e.puddle){e.puddle.visible=e.cryT>0;const pk=Math.min(1,e.cryT/3);e.puddle.scale.setScalar(.2+1.8*pk);e.puddle.position.set(e.x+(e.sx||0),topY(e.x,e.z)+.03,e.z+(e.sz||0));}
+  if(e.puddle){e.puddle.visible=e.cryT>0;const pk=Math.min(1,e.cryT/8);e.puddle.scale.setScalar(.2+1.8*pk);e.puddle.position.set(e.x+(e.sx||0),topY(e.x,e.z)+.03,e.z+(e.sz||0));}
   const lerp=(a,b,k)=>a+(b-a)*k,k=Math.min(1,dt*14);
-  const tgt={l0:0,l1:0,a0:0,a1:0,az:0,hx:0,hy:0,mouth:0};
-  if(cry){const w=Math.sin(t*8);tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-2.2+w*.45;tgt.a1=-2.2-w*.45;tgt.az=.4;tgt.hx=.5;tgt.mouth=.35;}
+  const tgt={l0:0,l1:0,kn:0,el:0,a0:0,a1:0,az:0,hx:0,hy:0,mouth:0};
+  if(cry){const w=Math.sin(t*6);tgt.l0=-2.0;tgt.l1=-2.0;tgt.kn=2.4;tgt.a0=-1.15+w*.02;tgt.a1=-1.15+w*.02;tgt.el=.35;tgt.az=.1;tgt.hx=-1.0;tgt.mouth=.4;}
   else if(m==='walk'){tgt.l0=sw*.7;tgt.l1=-sw*.7;tgt.a0=-sw*.8;tgt.a1=sw*.8;}
   else if(sit){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-.3;tgt.a1=-.3;}
   else if(m==='scream'){tgt.a0=-2.9;tgt.a1=-2.9;tgt.hx=-.5;tgt.mouth=1;}
@@ -659,6 +665,8 @@ function animChar(e,dt){
   else if(m==='cup'){tgt.a0=-1.95;tgt.a1=-1.95;tgt.az=.55;tgt.mouth=.4;}
   const lg=c.legs,ar=c.arms;
   lg[0].rotation.x=lerp(lg[0].rotation.x,tgt.l0,k);lg[1].rotation.x=lerp(lg[1].rotation.x,tgt.l1,k);
+  for(const L2 of lg){const kn=L2.userData.knee;kn.rotation.x=lerp(kn.rotation.x,tgt.kn,k);}
+  for(const A of ar){const el=A.userData.elbow;el.rotation.x=lerp(el.rotation.x,tgt.el,k);}
   ar[0].rotation.x=lerp(ar[0].rotation.x,tgt.a0,k);ar[1].rotation.x=lerp(ar[1].rotation.x,tgt.a1,k);
   ar[0].rotation.z=lerp(ar[0].rotation.z,-tgt.az,k);ar[1].rotation.z=lerp(ar[1].rotation.z,tgt.az,k);
   c.head.rotation.x=lerp(c.head.rotation.x,tgt.hx,k);c.head.rotation.y=lerp(c.head.rotation.y,tgt.hy,k);
@@ -676,8 +684,8 @@ function animChar(e,dt){
   tr.visible=ts>0;
   const tears=c.head.userData.tears;
   if(cry){
-    if(!tears){c.head.userData.tears=[];for(let i=0;i<14;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),new THREE.MeshBasicMaterial({color:'#c8ecff',transparent:true,opacity:.95,depthWrite:false}));m.scale.set(.001,.001,.001);c.head.add(m);c.head.userData.tears.push(m);}}
-    for(let i=0;i<14;i++){const m=c.head.userData.tears[i],side=i%2?1:-1,ph=(t*1.5+i*.37+(i%3)*.11)%1,ty=.02-ph*ph*1.25,tx=side*.2;m.visible=ph<.95;m.position.set(tx,ty,ezf(tx,ty)+.03);m.scale.setScalar(.13*(1-ph*.3));}
+    if(!tears){c.head.userData.tears=[];for(let i=0;i<4;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),new THREE.MeshBasicMaterial({color:'#c8ecff',transparent:true,opacity:.95,depthWrite:false}));m.scale.set(.001,.001,.001);c.head.add(m);c.head.userData.tears.push(m);}}
+    for(let i=0;i<4;i++){const m=c.head.userData.tears[i],side=i%2?1:-1,ph=(t*.3+Math.floor(i/2)*.5+(side>0?.25:0))%1,tx=side*.19,ty=.04-ph*ph*1.3;m.visible=ph<.95;m.position.set(tx,ty,ezf(tx,ty)+.03);m.scale.setScalar(.11*(1-ph*.2));}
   }else if(tears){tears.forEach(m=>m.visible=false);}
   if(ts>0){tr.position.set(TX,ty,tz);tr.scale.set(.085*ts,.14*ts,.06*ts);tr.material.opacity=to;}
 }
@@ -1091,7 +1099,6 @@ $('b2').onclick=()=>{if(!ready())return;$('err').textContent='';$('txt').value='
 $('b4').onclick=()=>{
   if(full||me.mode==='cry')return;
   if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});}
-  me.tyaw=Math.atan2(camera.position.x-me.x,camera.position.z-me.z);
   startAnim('cry',null);
   toast('엉엉 울면서 털어 보내요.',2400);
 };
@@ -1154,7 +1161,7 @@ function resize(){
   const w=VW(),h=VH(),asp=w/h;PORTRAIT=asp<.9;
   renderer.setSize(w,h,false);
   const shift=PORTRAIT?.12:.3,k=PORTRAIT?1:Math.max(1,1.36/asp);
-  camera.fov=PORTRAIT?50:46;
+  camera.fov=PORTRAIT?41:46;
   camBase.copy(CAM_TARGET).add(CAM_BASE.clone().sub(CAM_TARGET).multiplyScalar(k));
   camera.position.copy(camBase);camera.lookAt(CAM_TARGET);REFD=camBase.distanceTo(CAM_TARGET)*.95;
   camera.aspect=w/(h*(1+shift));camera.setViewOffset(w,h*(1+shift),0,0,w,h);camera.updateProjectionMatrix();
