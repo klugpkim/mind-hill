@@ -666,8 +666,12 @@ function animChar(e,dt){
   if(tt<.4){const u=tt/.4;ty=EY-.1;ts=.35+.65*u;tz=ezf(TX,ty)+.03;}
   else if(tt<1.2){const u=(tt-.4)/.8;ty=EY-.1-u*.62;ts=1;tz=ezf(TX,ty)+.03;}
   else if(tt<1.8){const v=(tt-1.2)/.6;ty=EY-.72-v*v*1.5;ts=1;to=.95*(1-v);tz=ezf(TX,EY-.72)+.03+v*.1;}
-  if(!cry)ts=0;
-  tr.visible=ts>0;
+  ts=0;tr.visible=false;
+  const tears=c.head.userData.tears;
+  if(cry){
+    if(!tears){c.head.userData.tears=[];for(let i=0;i<14;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),new THREE.MeshBasicMaterial({color:'#c8ecff',transparent:true,opacity:.95,depthWrite:false}));m.scale.set(.001,.001,.001);c.head.add(m);c.head.userData.tears.push(m);}}
+    for(let i=0;i<14;i++){const m=c.head.userData.tears[i],side=i%2?1:-1,ph=(t*2.2+i*.071+e.tearOff)%1,ty=.05-ph*1.1,tx=side*.2;m.visible=true;m.position.set(tx,ty,ezf(tx,ty)+.03);m.scale.setScalar(.15*(1-ph*.3));}
+  }else if(tears){tears.forEach(m=>m.visible=false);}
   if(ts>0){tr.position.set(TX,ty,tz);tr.scale.set(.085*ts,.14*ts,.06*ts);tr.material.opacity=to;}
 }
 
@@ -1081,8 +1085,8 @@ $('b4').onclick=()=>{
   if(full||me.mode==='cry')return;
   if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});}
   me.tyaw=Math.atan2(camera.position.x-me.x,camera.position.z-me.z);
-  startAnim('cry',{at:.6,text:'엉엉 울고 털어 보내요',scream:false});
-  toast('엉엉 울고 나면 조금 가벼워질 거예요.',2200);
+  startAnim('cry',null);
+  toast('엉엉 울고 털어 보내요.',2400);
 };
 $('b3').onclick=()=>{
   if(full)return;
