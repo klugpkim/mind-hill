@@ -95,9 +95,9 @@ window.__showErr=show;})();
   <div id="bubbles"></div>
   <div id="vig"></div>
   <div id="bar">
-    <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="rgba(255,255,255,.3)"/><path d="M9 10h.01M15 10h.01" stroke-width="2.2"/><ellipse cx="12" cy="15.4" rx="2" ry="2.6" fill="#fff" stroke="none"/></svg><span>소리지르기</span></button>
-    <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 2.8a8.5 8.5 0 1 1-4 16l-3.8 1.3 1.3-3.6A8.5 8.5 0 0 1 12 2.8z" fill="rgba(255,255,255,.3)"/><circle cx="8.5" cy="11" r="1.2" fill="#fff" stroke="none"/><circle cx="12" cy="11" r="1.2" fill="#fff" stroke="none"/><circle cx="15.5" cy="11" r="1.2" fill="#fff" stroke="none"/></svg><span>고민 날려보내기</span></button>
-    <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2.1" fill="#fff" stroke="none"/><path d="M12 8c-2 0-3.2 1-3.6 2.8L7 15.4c-2 .7-3.5 1.7-3.5 3.1 0 1.2 1.3 2 3 2h11c1.7 0 3-.8 3-2 0-1.4-1.5-2.4-3.5-3.1l-1.4-4.6C15.2 9 14 8 12 8z" fill="rgba(255,255,255,.3)"/><path d="M8.5 16.5c1 .7 2.2 1 3.5 1s2.5-.3 3.5-1"/></svg><span>명상하기</span></button>
+    <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><path d="M4 10v4h3l6 4V6L7 10H4z"/><path d="M16.5 9.5a4 4 0 0 1 0 5"/><path d="M19.5 6.5a8 8 0 0 1 0 11"/></svg><span>소리지르기</span></button>
+    <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M21 3 10 14"/><path d="M21 3l-7 18-4-7-7-4 18-7z"/></svg><span>고민 날려보내기</span></button>
+    <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.2"/><path d="M12 9v4"/><path d="M6.5 14.5c1.5 1.8 3.4 2.5 5.5 2.5s4-.7 5.5-2.5"/><path d="M5 20.5c1-2.4 3.6-3.6 7-3.6s6 1.2 7 3.6"/></svg><span>명상하기</span></button>
   </div>
   <div id="info"></div>
   <div id="toast"></div>
@@ -147,7 +147,7 @@ window.__showErr=show;})();
 </div>
 <script type="module">
 import * as THREE from 'three';
-const MAX_ROOM=10,COOLDOWN=10000,MAXLEN=50,SPEED=9;
+const SEP_D=2.2,MAX_ROOM=10,COOLDOWN=10000,MAXLEN=50,SPEED=9;
 const BUBBLE_LIFE=5.2,PEER_TTL=13000,HEARTBEAT=5000,PEER_MIN_BUBBLE_GAP=4500,PEER_MIN_SCREAM_GAP=1200;
 const SCREAMS=['악!!!!!!','으아아아악!!!!!!','이제 그만!!!!!!','속이 터질 것 같아!!!!!!','답답해!!!!!!','소리 지르고 싶어!!!!!!',
  '힘들어!!!!!!','진짜 지쳤어!!!!!!','제발 좀 쉬자!!!!!!','너무 피곤해!!!!!!','하루만 쉬고 싶어!!!!!!',
@@ -893,7 +893,7 @@ function update(e,dt){
     }
   }
   e.yaw+=angDiff(e.yaw,e.tyaw)*Math.min(1,dt*10);
-  const r=e.rig.root;r.position.set(e.x,topY(e.x,e.z),e.z);r.rotation.y=e.yaw;r.scale.setScalar(1.65*(e.look.scale||1)*CHARBOOST*clamp(_cd2.copy(r.position).sub(camera.position).dot(_cd)/REFD,.7,1.4));
+  const ex=e.x+(e.sx||0),ez=e.z+(e.sz||0);const r=e.rig.root;r.position.set(ex,topY(ex,ez),ez);r.rotation.y=e.yaw;r.scale.setScalar(1.65*(e.look.scale||1)*CHARBOOST*clamp(_cd2.copy(r.position).sub(camera.position).dot(_cd)/REFD,.7,1.4));
   animChar(e,dt);fireStep(e,dt);
 }
 
@@ -1034,15 +1034,18 @@ function frame(now){
     if(avg>26&&dpr>.8){dpr=Math.max(.8,dpr-.15);perfOK=0;renderer.setPixelRatio(dpr);renderer.setSize(VW(),VH(),false);}
     else if(avg<15&&dpr<MAXDPR){if(++perfOK>=4){perfOK=0;dpr=Math.min(MAXDPR,dpr+.1);renderer.setPixelRatio(dpr);renderer.setSize(VW(),VH(),false);}}
     else perfOK=0;}}
-  if(PORTRAIT&&!qp.has('closeup')){const dx=clamp((me.x+4)*.8,-22,12),dz=clamp((me.z+8)*.5,-22,3),k=Math.min(1,dt*3);camOff.x+=(dx-camOff.x)*k;camOff.z+=(dz-camOff.z)*k;}
+  if(!qp.has('closeup')){const dx=clamp(me.x+6,-60,60),dz=clamp(me.z+8,-60,60),k=Math.min(1,dt*3);camOff.x+=(dx-camOff.x)*k;camOff.z+=(dz-camOff.z)*k;}
   camYawS+=(camYaw-camYawS)*Math.min(1,dt*4);
-  if(!qp.has('closeup')&&(PORTRAIT||Math.abs(camYawS)>.0005||camYawMoved)){
+  if(!qp.has('closeup')){
     camYawMoved=Math.abs(camYaw-camYawS)>.0005;
     const bx=camBase.x-CAM_TARGET.x,bz=camBase.z-CAM_TARGET.z,c=Math.cos(camYawS),sn=Math.sin(camYawS);
     camera.position.set(CAM_TARGET.x+camOff.x+bx*c+bz*sn,camBase.y,CAM_TARGET.z+camOff.z-bx*sn+bz*c);
     tgtTmp.copy(CAM_TARGET).add(camOff);camera.lookAt(tgtTmp);
   }
   camera.getWorldDirection(_cd);
+  {const all=[me,...peers.values()];for(const e of all){e.sx=0;e.sz=0;}
+   for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){const a=all[i],b=all[j],dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz);
+     if(d<SEP_D&&d>1e-3){const k=(SEP_D-d)/2/d;a.sx-=dx*k;a.sz-=dz*k;b.sx+=dx*k;b.sz+=dz*k;}}}
   update(me,dt);for(const p of peers.values())update(p,dt);
   placeJoin();
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
