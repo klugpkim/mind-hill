@@ -992,6 +992,40 @@ function dropPet(){
 }
 // 접속(진입)할 때 한 번 랜덤으로 40% 확률 결정
 const petSeed=Math.random(),petOn=Math.random()<.4;
+/* 비 테마: 언덕을 폴짝폴짝 뛰어다니는 개구리 */
+const frogs=[];
+if(theme==='rain'){
+  const fbody=new THREE.MeshLambertMaterial({color:'#7fb85a',flatShading:true}),fwhite=new THREE.MeshBasicMaterial({color:'#ffffff'}),fdark=new THREE.MeshBasicMaterial({color:'#1d2a14'});
+  for(let i=0;i<4;i++){
+    const g=new THREE.Group(),b=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),fbody);b.scale.set(.2,.14,.26);b.position.y=.12;b.castShadow=true;g.add(b);
+    for(const sx of [-1,1]){
+      const e=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),fwhite);e.scale.setScalar(.06);e.position.set(sx*.08,.27,.13);g.add(e);
+      const q=new THREE.Mesh(new THREE.SphereGeometry(1,6,4),fdark);q.scale.setScalar(.03);q.position.set(sx*.08,.28,.18);g.add(q);
+    }
+    g.scale.setScalar(1.6);scene.add(g);
+    const a=Math.random()*Math.PI*2,r=4+Math.random()*9,[x,z]=clampTarget(IC[0]+Math.cos(a)*r,IC[1]+Math.sin(a)*r);
+    frogs.push({g,x,z,hop:null,wait:Math.random()*2});
+  }
+}
+function updateFrogs(dt){
+  for(const f of frogs){
+    if(f.hop){
+      const h=f.hop;h.t+=dt;const u=Math.min(1,h.t/h.d);
+      f.x=h.x0+(h.x1-h.x0)*u;f.z=h.z0+(h.z1-h.z0)*u;
+      f.g.position.set(f.x,topY(f.x,f.z)+Math.sin(u*Math.PI)*.45,f.z);
+      f.g.rotation.y=Math.atan2(h.x1-h.x0,h.z1-h.z0);
+      if(u>=1)f.hop=null;
+    }else{
+      f.g.position.set(f.x,topY(f.x,f.z),f.z);
+      f.wait-=dt;
+      if(f.wait<=0){
+        const a=Math.random()*Math.PI*2,d=1.2+Math.random()*1.6,[nx,nz]=clampTarget(f.x+Math.cos(a)*d,f.z+Math.sin(a)*d);
+        f.hop={x0:f.x,z0:f.z,x1:nx,z1:nz,t:0,d:.45+Math.random()*.2};
+        f.wait=.6+Math.random()*1.8;
+      }
+    }
+  }
+}
 function updatePets(){
   const now=Date.now(),kind=theme==='night'?'cat':theme==='sunset'?'dog':null;
   if(!kind||!petOn){if(petRec){dropPet();petRec=null;}return;}
@@ -1072,7 +1106,7 @@ function joinFire(p){
   let spot=null;
   for(const a of [0,Math.PI,2.1,-2.1,1.05,-1.05,2.6,-2.6,.5,-.5]){
     const c=Math.cos(a),sn=Math.sin(a),x=clampTarget(fx+(ux*c-uz*sn)*3.4,fz+(ux*sn+uz*c)*3.4);
-    if(!others.some(([ox,oz])=>Number.isFinite(ox)&&Math.hypot(ox-x[0],oz-x[1])<2.3)){spot=x;break;}
+    if(!others.some(([ox,oz])=>Number.isFinite(ox)&&Math.hypot(ox-x[0],oz-x[1])<2.6)){spot=x;break;}
   }
   const [x,z]=spot||clampTarget(fx+ux*3.4,fz+uz*3.4);
   me.tx=x;me.tz=z;me.pending=null;me.joined=null;me.join={id:p.id,yaw:Math.atan2(camera.position.x-x,camera.position.z-z)};me.mode='walk';
@@ -1196,6 +1230,7 @@ function frame(now){
      if(d<SEP_D&&d>1e-3){const k=(SEP_D-d)/2/d;a.sx-=dx*k;a.sz-=dz*k;b.sx+=dx*k;b.sz+=dz*k;}}}
   update(me,dt);for(const p of peers.values())update(p,dt);
   updatePets();
+  updateFrogs(dt);
   placeJoin();
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
