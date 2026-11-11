@@ -944,8 +944,8 @@ function joinFire(p){
   const f=p.fire;if(!f)return;
   const fx=f.g.position.x,fz=f.g.position.z,vx=p.x-fx,vz=p.z-fz,len=Math.hypot(vx,vz)||1;
   let best=null,bd=1e9;
-  for(const a of [Math.PI-.9,Math.PI-.45,Math.PI,Math.PI+.45,Math.PI+.9]){
-    const c=Math.cos(a),s=Math.sin(a),dx=(vx*c-vz*s)/len*6.8,dz=(vx*s+vz*c)/len*6.8,[x,z]=clampTarget(fx+dx,fz+dz),d=Math.hypot(x-fx-dx,z-fz-dz)*3+(z-fz)*.6;
+  for(const a of [Math.PI/2,-Math.PI/2]){
+    const c=Math.cos(a),sn=Math.sin(a),dx=(vx*c-vz*sn)/len*4,dz=(vx*sn+vz*c)/len*4,[x,z]=clampTarget(fx+dx,fz+dz),d=Math.hypot(x-me.x,z-me.z);
     if(d<bd){bd=d;best=[x,z];}
   }
   const [x,z]=best;
