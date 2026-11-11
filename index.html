@@ -970,7 +970,7 @@ function dropPet(){
 // 접속(진입)할 때 한 번 랜덤으로 40% 확률 결정
 const petSeed=Math.random(),petOn=Math.random()<.4;
 function updatePets(){
-  const now=Date.now(),kind=theme==='rain'?'cat':theme==='sunset'?'dog':null;
+  const now=Date.now(),kind=theme==='night'?'cat':theme==='sunset'?'dog':null;
   if(!kind||!petOn){if(petRec){dropPet();petRec=null;}return;}
   if(!petRec||petRec.kind!==kind){
     dropPet();
