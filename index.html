@@ -641,10 +641,12 @@ function animChar(e,dt){
   else if(m==='idle')bob=Math.sin(t*2)*.04;
   else if(sit)bob=Math.sin(t*1.4)*.03;
   else if(m==='hug')bob=Math.sin(t*2.6)*.04;
-  c.g.position.y=bob-(sit?.62:0);
+  c.g.position.y=bob-(m==='sit'?.62:0);
+  e.lieAm=(e.lieAm||0)+((cry?1:0)-(e.lieAm||0))*Math.min(1,dt*5);
+  c.g.rotation.x=Math.PI/2*e.lieAm;
   const lerp=(a,b,k)=>a+(b-a)*k,k=Math.min(1,dt*14);
   const tgt={l0:0,l1:0,a0:0,a1:0,az:0,hx:0,hy:0,mouth:0};
-  if(cry){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-2.5;tgt.a1=-2.5;tgt.az=.45+Math.sin(t*10)*.15;tgt.hx=.45;tgt.mouth=.35;}
+  if(cry){tgt.l0=0;tgt.l1=0;tgt.a0=-1.5;tgt.a1=-1.5;tgt.az=.35+Math.sin(t*10)*.12;tgt.hx=.2;tgt.mouth=.35;}
   else if(m==='walk'){tgt.l0=sw*.7;tgt.l1=-sw*.7;tgt.a0=-sw*.8;tgt.a1=sw*.8;}
   else if(sit){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-.3;tgt.a1=-.3;}
   else if(m==='scream'){tgt.a0=-2.9;tgt.a1=-2.9;tgt.hx=-.5;tgt.mouth=1;}
