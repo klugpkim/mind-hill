@@ -907,6 +907,7 @@ const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),plane=new THREE.Plane(ne
 renderer.domElement.addEventListener('pointerdown',ev=>{
   if(full)return;
   const rc=stage.getBoundingClientRect(),cx=ev.clientX-rc.left,cy=ev.clientY-rc.top;
+  if(petRec&&petRec.active){const [px,py]=toScreen(petRec.x,topY(petRec.x,petRec.z)+1.4,petRec.z);if(Math.hypot(cx-px,cy-py)<Math.max(46,64*UK)){showJoin(petRec,'pet');return;}}
   for(const p of peers.values()){
     const f=p.fire;if(!f||p.mode!=='sit'||p.joined||p.fk<.5)continue;
     const [fx,fy]=toScreen(f.g.position.x,f.g.position.y+2.5,f.g.position.z);
@@ -933,13 +934,86 @@ function toast(msg,ms=2600){
   else show();
 }
 /* 함께 불멍하기 */
+/* ---------- 비 테마 고양이 · 노을 테마 강아지 (시간 구간마다 같은 결과로 계산해 접속자끼리 동일하게 보임) ---------- */
+const PET_WIN=90000,PET_LIFE=45000,PET_PROB=.35;
+const hash01=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);};
+const petMat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
+function buildPet(kind){
+  const cat=kind==='cat',c=cat?'#8c919c':'#c9955f',d=new THREE.Color(c).multiplyScalar(.72).getStyle();
+  const g=new THREE.Group(),legs=[];
+  const body=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),petMat(c));body.scale.set(.5,.42,.82);body.position.y=.5;g.add(body);
+  const head=new THREE.Group();head.position.set(0,.86,.62);g.add(head);
+  head.add(new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),petMat(c)));
+  for(const sx of[-1,1]){
+    const ear=cat?new THREE.Mesh(new THREE.ConeGeometry(.12,.3,5),petMat(d)):new THREE.Mesh(new THREE.SphereGeometry(.14,8,6),petMat(d));
+    if(cat)ear.position.set(sx*.18,.38,0);else{ear.scale.set(.6,1.6,.7);ear.position.set(sx*.3,.02,-.05);}
+    head.add(ear);
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.045,6,5),petMat('#1b2033'));eye.position.set(sx*.13,.07,.3);head.add(eye);
+  }
+  if(!cat){const sn=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),petMat('#efe3cf'));sn.position.set(0,-.08,.26);head.add(sn);}
+  const nose=new THREE.Mesh(new THREE.SphereGeometry(cat?.05:.09,6,5),petMat(cat?'#f0a0a8':'#1b2033'));nose.position.set(0,cat?-.02:-.06,cat?.34:.36);head.add(nose);
+  for(const [lx,lz] of [[-.28,.45],[.28,.45],[-.28,-.45],[.28,-.45]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.09,.08,.42,6),petMat(d));l.position.set(lx,.2,lz);g.add(l);legs.push(l);}
+  const tail=new THREE.Group();tail.position.set(0,.6,-.8);g.add(tail);
+  const tm=new THREE.Mesh(new THREE.CylinderGeometry(cat?.05:.1,cat?.07:.12,cat?.9:.6,6),petMat(d));tm.position.y=cat?.4:.22;tm.rotation.x=cat?-.9:-.3;tail.add(tm);
+  return {g,body,head,legs,tail};
+}
+let petRec=null;
+function dropPet(){
+  if(!petRec)return;
+  if(petRec.g)scene.remove(petRec.g);petRec.g=null;petRec.active=false;
+  if(joinTarget===petRec)hideJoin();
+}
+function updatePets(){
+  const now=Date.now(),kind=theme==='rain'?'cat':theme==='sunset'?'dog':null;
+  if(!kind){if(petRec){dropPet();petRec=null;}return;}
+  const w=Math.floor(now/PET_WIN);
+  if(!petRec||petRec.win!==w||petRec.kind!==kind){
+    dropPet();
+    petRec={win:w,kind,ok:hash01(w*7.3+1)<PET_PROB,active:false,g:null,petUntil:0};
+    if(petRec.ok){
+      // sea-side edge on the camera-facing half of the island, so it is visible
+      const camA=Math.atan2(CAM_BASE.z-IC[1],CAM_BASE.x-IC[0]);
+      let a=0,E=null;
+      for(let j=0;j<16;j++){
+        a=camA+.2+hash01(w*31.7+j*4.1+7)*2.6;
+        E=clampTarget(IC[0]+Math.cos(a)*200,IC[1]+Math.sin(a)*200);
+        const [sx,sy]=toScreen(E[0],topY(E[0],E[1])+.5,E[1]);
+        if(sx>VW()*.12&&sx<VW()*.88&&sy>VH()*.35&&sy<VH()*.92)break;
+      }
+      const b=hash01(w*17.1+3)*Math.PI*2,r=hash01(w*5.9+9);
+      petRec.a=a;petRec.E=[IC[0]+(E[0]-IC[0])*.92,IC[1]+(E[1]-IC[1])*.92];
+      petRec.S=clampTarget(IC[0]+Math.cos(b)*(8+r*18),IC[1]+Math.sin(b)*(8+r*12));
+      petRec.start=w*PET_WIN+hash01(w*3.9+5)*40000;petRec.end=petRec.start+PET_LIFE;
+      petRec.x=petRec.S[0];petRec.z=petRec.S[1];
+    }
+  }
+  const p=petRec;if(!p.ok)return;
+  if(!p.active&&now>=p.start&&now<p.end){p.P=buildPet(p.kind);p.g=p.P.g;p.g.scale.setScalar(1.2);scene.add(p.g);p.active=true;}
+  if(!p.active)return;
+  if(now>=p.end){dropPet();return;}
+  const k=Math.min(1,(now-p.start)/7000),e=k*k*(3-2*k),crawl=k<1,t=now/1000,P=p.P;
+  const dx=p.E[0]-p.S[0],dz=p.E[1]-p.S[1];
+  p.x=p.S[0]+dx*e;p.z=p.S[1]+dz*e;
+  p.g.position.set(p.x,topY(p.x,p.z),p.z);
+  p.g.rotation.y=crawl?Math.atan2(dx,dz):Math.atan2(Math.cos(p.a),Math.sin(p.a));
+  P.body.position.y=crawl?.3:.5;
+  P.legs.forEach((l,i)=>{l.scale.y=crawl?1:.35;l.position.y=crawl?.12:.1;l.rotation.x=crawl?Math.sin(t*9+i*1.6)*.4:0;});
+  const petted=now<p.petUntil;
+  P.head.rotation.x=crawl?.3:0;
+  P.head.rotation.z=petted?Math.sin(t*12)*.18:0;
+  P.tail.rotation.y=Math.sin(t*(petted?16:3))*(petted?.6:.25);
+}
+function petAnimal(p){p.petUntil=Date.now()+3500;toast(p.kind==='cat'?'고양이를 쓰다듬었어요 ♡':'강아지를 쓰다듬었어요 ♡',1800);}
 let joinTarget=null,joinKind='fire';const joinBtn=$('join'),joinTxt=joinBtn.querySelector('span');
-function showJoin(p,kind='fire'){joinTarget=p;joinKind=kind;joinTxt.textContent=kind==='hug'?'안아주기':'함께 불멍하기';joinBtn.classList.toggle('hug',kind==='hug');joinBtn.classList.add('on');placeJoin();}
+function showJoin(p,kind='fire'){joinTarget=p;joinKind=kind;joinTxt.textContent=kind==='hug'?'안아주기':kind==='pet'?'쓰다듬기':'함께 불멍하기';joinBtn.classList.toggle('hug',kind==='hug');joinBtn.classList.add('on');placeJoin();}
 function hideJoin(){joinTarget=null;joinBtn.classList.remove('on');}
 function placeJoin(){
   const p=joinTarget;if(!p)return;
   let sx,sy;
-  if(joinKind==='hug'){
+  if(joinKind==='pet'){
+    if(!petRec||!petRec.active||joinTarget!==petRec){hideJoin();return;}
+    [sx,sy]=toScreen(p.x,topY(p.x,p.z)+1.5,p.z);
+  }else if(joinKind==='hug'){
     if(!peers.has(p.id)||p.mode==='sit'||p.mode==='scream'||p.mode==='cup'||p.mode==='hug'){hideJoin();return;}
     [sx,sy]=toScreen(p.x,topY(p.x,p.z)+5.4,p.z);
   }else{
@@ -972,7 +1046,7 @@ function joinFire(p){
   toast('모닥불 옆으로 가서 함께 앉아요.',2200);
 }
 joinBtn.addEventListener('pointerdown',e=>e.stopPropagation());
-joinBtn.onclick=()=>{const p=joinTarget,k=joinKind;hideJoin();if(p&&!full)(k==='hug'?hugPeer:joinFire)(p);};
+joinBtn.onclick=()=>{const p=joinTarget,k=joinKind;hideJoin();if(p&&k==='pet'){petAnimal(p);return;}if(p&&!full)(k==='hug'?hugPeer:joinFire)(p);};
 let cdUntil=0;
 const cdLeft=()=>Math.max(0,cdUntil-Date.now());
 function startAnim(mode,pending){
@@ -1081,6 +1155,7 @@ function frame(now){
    for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){const a=all[i],b=all[j],dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz);
      if(d<SEP_D&&d>1e-3){const k=(SEP_D-d)/2/d;a.sx-=dx*k;a.sz-=dz*k;b.sx+=dx*k;b.sz+=dz*k;}}}
   update(me,dt);for(const p of peers.values())update(p,dt);
+  updatePets();
   placeJoin();
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
