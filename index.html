@@ -832,7 +832,7 @@ function fireStep(e,dt){
     else if(fireOwner===me){fireLight.intensity=0;fireOwner=null;}
   }
   if(e.mode==='sit'&&!e.joined){
-    if(!e.fire){const [fx,fz]=clampTarget(e.x+5,e.z-2.6);e.fire=makeFire(fx,fz);e.fk=0;}
+    if(!e.fire){const [fx,fz]=clampTarget(e.x+3.3,e.z-1.9);e.fire=makeFire(fx,fz);e.fk=0;}
     e.fk=Math.min(1,e.fk+dt*1.8);
   }else if(e.fire){
     e.fk=Math.max(0,e.fk-dt*2.4);
