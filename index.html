@@ -1002,6 +1002,7 @@ function updatePets(){
     P.tail.rotation.y=Math.sin(t*16)*.6;
   }else{
     p.g.position.set(p.x,topY(p.x,p.z),p.z);
+    p.g.rotation.y=Math.atan2(Math.cos(p.a),Math.sin(p.a));
     P.head.rotation.z=0;
     P.tail.rotation.y=Math.sin(t*3)*.25;
   }
@@ -1012,7 +1013,7 @@ function petAnimal(p){
   const [x,z]=clampTarget(p.x+Math.sin(ang)*1.8,p.z+Math.cos(ang)*1.8);
   me.tx=x;me.tz=z;me.pending=null;me.join=null;me.hug=null;me.joined=null;me.petTo=p;me.mode='walk';
   net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
-  toast(p.kind==='cat'?'고양이에게 가요.':'강아지에게 가요.',1600);
+  toast(p.kind==='cat'?'고양이를 쓰다듬으러 가요.':'강아지를 쓰다듬으러 가요.',1600);
 }
 
 let joinTarget=null,joinKind='fire';const joinBtn=$('join'),joinTxt=joinBtn.querySelector('span');
