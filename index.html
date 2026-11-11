@@ -646,6 +646,7 @@ function animChar(e,dt){
   if(m==='walk'){tgt.l0=sw*.7;tgt.l1=-sw*.7;tgt.a0=-sw*.8;tgt.a1=sw*.8;}
   else if(sit){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-.3;tgt.a1=-.3;}
   else if(m==='scream'){tgt.a0=-2.9;tgt.a1=-2.9;tgt.hx=-.5;tgt.mouth=1;}
+  else if(m==='pet'){tgt.a0=-1.0;tgt.a1=-.4;tgt.az=.2;tgt.hx=.3;tgt.mouth=.1;}
   else if(m==='hug'){tgt.a0=-1.3;tgt.a1=-1.3;tgt.az=.5;tgt.hx=.1;tgt.mouth=.25;tgt.hy=clamp(angDiff(e.yaw,Math.atan2(camera.position.x-e.x,camera.position.z-e.z))*.7,-.8,.8);}
   else if(m==='cup'){tgt.a0=-1.95;tgt.a1=-1.95;tgt.az=.55;tgt.mouth=.4;}
   const lg=c.legs,ar=c.arms;
@@ -879,6 +880,8 @@ function update(e,dt){
     e.modeT+=dt;
     if(e.pending&&e.modeT>=e.pending.at){const p=e.pending;e.pending=null;fireBubble(e,p.text,p.scream,p.local);}
     if(e.modeT>(e.mode==='scream'?1.5:1.7))e.mode='idle';
+  }else if(e.mode==='pet'){
+    e.modeT+=dt;if(e.modeT>4)e.mode='idle';
   }else if(e.mode==='hug'){
     e.modeT+=dt;if(e.modeT>3.8)e.mode='idle';
   }else if(e.mode!=='sit'){
@@ -983,26 +986,34 @@ function updatePets(){
     }
     const b=hash01(petSeed*53+3)*Math.PI*2,r=hash01(petSeed*29+9);
     petRec.a=a;petRec.E=[IC[0]+(E[0]-IC[0])*.92,IC[1]+(E[1]-IC[1])*.92];
-    petRec.S=clampTarget(IC[0]+Math.cos(b)*(8+r*18),IC[1]+Math.sin(b)*(8+r*12));
-    petRec.start=now+2000+hash01(petSeed*71+5)*18000;petRec.end=petRec.start+PET_LIFE;
-    petRec.x=petRec.S[0];petRec.z=petRec.S[1];
+    
+    petRec.start=now+2000+hash01(petSeed*71+5)*18000;petRec.nuzzleUntil=0;
+    petRec.x=petRec.E[0];petRec.z=petRec.E[1];
   }
   const p=petRec;
-  if(!p.active&&now>=p.start){p.P=buildPet(p.kind);p.g=p.P.g;p.g.scale.setScalar(1.2);scene.add(p.g);p.active=true;}
+  if(!p.active&&now>=p.start){p.P=buildPet(p.kind);p.g=p.P.g;p.g.scale.setScalar(1.7);scene.add(p.g);p.active=true;p.x=p.E[0];p.z=p.E[1];}
   if(!p.active)return;
-  const k=Math.min(1,(now-p.start)/7000),e=k*k*(3-2*k),crawl=k<1,t=now/1000,P=p.P;
-  const dx=p.E[0]-p.S[0],dz=p.E[1]-p.S[1];
-  p.x=p.S[0]+dx*e;p.z=p.S[1]+dz*e;
-  p.g.position.set(p.x,topY(p.x,p.z),p.z);
-  p.g.rotation.y=crawl?Math.atan2(dx,dz):Math.atan2(Math.cos(p.a),Math.sin(p.a));
-  P.body.position.y=crawl?.12:.36;
-  P.legs.forEach((l,i)=>{l.scale.y=crawl?1:.35;l.position.y=crawl?.12:.1;l.rotation.x=crawl?Math.sin(t*9+i*1.6)*.4:0;});
-  const petted=now<p.petUntil;
-  P.head.rotation.x=crawl?.3:0;
-  P.head.rotation.z=petted?Math.sin(t*12)*.18:0;
-  P.tail.rotation.y=Math.sin(t*(petted?16:3))*(petted?.6:.25);
+  const t=now/1000,P=p.P;
+  if(now<p.nuzzleUntil){
+    // 쓰다듬어 주면 접속자 캐릭터에게 다가가 부빔
+    const ang=Math.atan2(p.x-me.x,p.z-me.z),tx=me.x+Math.sin(ang)*1.5,tz=me.z+Math.cos(ang)*1.5;
+    p.x+=(tx-p.x)*.06;p.z+=(tz-p.z)*.06;
+    p.g.position.set(p.x,topY(p.x,p.z),p.z);
+    p.g.rotation.y=Math.atan2(me.x-p.x,me.z-p.z);
+    P.head.rotation.z=Math.sin(t*14)*.2;
+    P.tail.rotation.y=Math.sin(t*16)*.6;
+  }else{
+    p.g.position.set(p.x,topY(p.x,p.z),p.z);
+    P.head.rotation.z=0;
+    P.tail.rotation.y=Math.sin(t*3)*.25;
+  }
 }
-function petAnimal(p){p.petUntil=Date.now()+3500;toast(p.kind==='cat'?'고양이를 쓰다듬었어요 ♡':'강아지를 쓰다듬었어요 ♡',1800);}
+function petAnimal(p){
+  p.nuzzleUntil=Date.now()+5000;
+  me.tyaw=Math.atan2(p.x-me.x,p.z-me.z);
+  me.mode='pet';me.modeT=0;me.tx=me.x;me.tz=me.z;me.pending=null;me.join=null;me.hug=null;me.joined=null;
+  toast(p.kind==='cat'?'고양이를 쓰다듬고 있어요 ♡':'강아지를 쓰다듬고 있어요 ♡',2000);
+}
 let joinTarget=null,joinKind='fire';const joinBtn=$('join'),joinTxt=joinBtn.querySelector('span');
 function showJoin(p,kind='fire'){joinTarget=p;joinKind=kind;joinTxt.textContent=kind==='hug'?'안아주기':kind==='pet'?'쓰다듬기':'함께 불멍하기';joinBtn.classList.toggle('hug',kind==='hug');joinBtn.classList.add('on');placeJoin();}
 function hideJoin(){joinTarget=null;joinBtn.classList.remove('on');}
