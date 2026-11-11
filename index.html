@@ -988,9 +988,8 @@ function updatePets(){
     petRec.x=petRec.S[0];petRec.z=petRec.S[1];
   }
   const p=petRec;
-  if(!p.active&&now>=p.start&&now<p.end){p.P=buildPet(p.kind);p.g=p.P.g;p.g.scale.setScalar(1.2);scene.add(p.g);p.active=true;}
+  if(!p.active&&now>=p.start){p.P=buildPet(p.kind);p.g=p.P.g;p.g.scale.setScalar(1.2);scene.add(p.g);p.active=true;}
   if(!p.active)return;
-  if(now>=p.end){dropPet();return;}
   const k=Math.min(1,(now-p.start)/7000),e=k*k*(3-2*k),crawl=k<1,t=now/1000,P=p.P;
   const dx=p.E[0]-p.S[0],dz=p.E[1]-p.S[1];
   p.x=p.S[0]+dx*e;p.z=p.S[1]+dz*e;
