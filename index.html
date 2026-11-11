@@ -95,6 +95,11 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #dbox .acctrow .bank{font-size:12px;opacity:.85}
 #dbox .acctrow .num{font-size:12px;font-weight:600;letter-spacing:.02em}
 #dbox #copy-acct{display:block;margin:8px auto 0;font-size:11px}
+@keyframes dpop{from{opacity:0;transform:translateY(18px) scale(.92)}to{opacity:1;transform:none}}
+@keyframes dfade{from{opacity:0;transform:translateY(6px)}to{opacity:.92;transform:none}}
+#donate.on #dbox{animation:dpop .5s cubic-bezier(.2,.8,.2,1)}
+#donate.on .thanks .lead{animation:dfade .6s .18s both}
+#donate.on .sign{animation:dfade .6s .3s both}
 #dbox .sign{margin:18px 0 0;text-align:center}
 #dbox .sign p{margin:0 0 6px;font-size:12px;line-height:1.7;opacity:.6}
 #dbox .sign .by{margin:0}
@@ -1290,8 +1295,8 @@ function frame(now){
   if(!qp.has('closeup')){
     camYawMoved=Math.abs(camYaw-camYawS)>.0005;
     const bx=camBase.x-CAM_TARGET.x,bz=camBase.z-CAM_TARGET.z,c=Math.cos(camYawS),sn=Math.sin(camYawS);
-    camera.position.set(CAM_TARGET.x+camOff.x+bx*c+bz*sn,camBase.y,CAM_TARGET.z+camOff.z-bx*sn+bz*c);
-    tgtTmp.copy(CAM_TARGET).add(camOff);if(PORTRAIT)tgtTmp.y+=2.5;camera.lookAt(tgtTmp);
+    camera.position.set(CAM_TARGET.x+camOff.x+bx*c+bz*sn,camBase.y+(PORTRAIT?3.2:0),CAM_TARGET.z+camOff.z-bx*sn+bz*c);
+    tgtTmp.copy(CAM_TARGET).add(camOff);camera.lookAt(tgtTmp);
   }
   camera.getWorldDirection(_cd);
   {const all=[me,...peers.values()];for(const e of all){e.sx=0;e.sz=0;}
