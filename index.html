@@ -216,7 +216,7 @@ const hsh=(x,y)=>{const s=Math.sin(x*127.1+y*311.7)*43758.5453;return s-Math.flo
 const vn=(x,y)=>{const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
   const a=hsh(xi,yi),b=hsh(xi+1,yi),c=hsh(xi,yi+1),d=hsh(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};
 const WATER=-11.3;
-const IC=[-8,-15],IRX=37,IRZ=27;
+const IC=[-8,-15],IRX=50,IRZ=37;
 const RAD=t=>1+.065*Math.sin(2*t+.7)+.05*Math.sin(3*t+2)+.03*Math.sin(5*t+1);
 const polar=(x,z)=>{const dx=(x-IC[0])/IRX,dz=(z-IC[1])/IRZ;return [Math.hypot(dx,dz),Math.atan2(dz,dx)];};
 const edgeDist=(x,z)=>{const [r,t]=polar(x,z);return (RAD(t)-r)*24;};
@@ -272,7 +272,7 @@ renderer.domElement.id='c';stage.prepend(renderer.domElement);
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(PAL.fog,70,330);
 const camera=new THREE.PerspectiveCamera(46,1,.5,1500);
-const CAM_TARGET=new THREE.Vector3(-6,-5,-8),CAM_BASE=new THREE.Vector3(34,24,64);
+const CAM_TARGET=new THREE.Vector3(-6,0,-8),CAM_BASE=new THREE.Vector3(34,24,64);
 const gmArr=new Uint8Array(32);for(let i=0;i<32;i++){const t=i/31;gmArr[i]=Math.round(150+105*(t*t*(3-2*t)));}
 const gm=new THREE.DataTexture(gmArr,32,1,THREE.RedFormat);gm.minFilter=gm.magFilter=THREE.LinearFilter;gm.needsUpdate=true;
 const toonCache={};
@@ -647,7 +647,6 @@ function animChar(e,dt){
   else if(m==='idle')bob=Math.sin(t*2)*.04;
   else if(sit)bob=Math.sin(t*1.4)*.03;
   else if(m==='hug')bob=Math.sin(t*2.6)*.04;
-  e.lieAm=(e.lieAm||0)+((cry?1:0)-(e.lieAm||0))*Math.min(1,dt*5);
   c.g.position.y=bob-((m==='sit')?.62:0)-(cry?.3:0)+(cry?Math.sin(t*16)*.01:0);
   c.g.rotation.x=cry?.85:0;
   // 바닥에 고이는 눈물 웅덩이
@@ -961,7 +960,6 @@ function toast(msg,ms=2600){
 }
 /* 함께 불멍하기 */
 /* ---------- 비 테마 고양이 · 노을 테마 강아지 (시간 구간마다 같은 결과로 계산해 접속자끼리 동일하게 보임) ---------- */
-const PET_LIFE=60000;
 const hash01=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);};
 const petMat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
 function buildPet(kind){
