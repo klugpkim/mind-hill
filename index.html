@@ -889,6 +889,7 @@ function update(e,dt){
     if(d>.08){const st=Math.min(d,SPEED*dt);e.x+=dx/d*st;e.z+=dz/d*st;e.tyaw=Math.atan2(dx,dz);e.mode='walk';}
     else{
       e.mode='idle';
+      if(e.petTo){const q=e.petTo;e.petTo=null;e.tyaw=Math.atan2(q.x-e.x,q.z-e.z);e.mode='pet';e.modeT=0;q.nuzzleUntil=Date.now()+5000;}
       if(e.hug){
         const h=e.hug;e.hug=null;const g=peers.get(h.id);
         if(g&&g.mode!=='sit'&&g.mode!=='scream'&&g.mode!=='cup'&&Math.hypot(g.x-e.x,g.z-e.z)<4.2){
@@ -987,18 +988,15 @@ function updatePets(){
     const b=hash01(petSeed*53+3)*Math.PI*2,r=hash01(petSeed*29+9);
     petRec.a=a;petRec.E=[IC[0]+(E[0]-IC[0])*.92,IC[1]+(E[1]-IC[1])*.92];
     
-    petRec.start=now+2000+hash01(petSeed*71+5)*18000;petRec.nuzzleUntil=0;
+    petRec.start=0;petRec.nuzzleUntil=0;
     petRec.x=petRec.E[0];petRec.z=petRec.E[1];
   }
   const p=petRec;
-  if(!p.active&&now>=p.start){p.P=buildPet(p.kind);p.g=p.P.g;p.g.scale.setScalar(1.7);scene.add(p.g);p.active=true;p.x=p.E[0];p.z=p.E[1];}
+  if(!p.active&&now>=p.start){p.P=buildPet(p.kind);p.g=p.P.g;p.g.scale.setScalar(2.2);scene.add(p.g);p.active=true;p.x=p.E[0];p.z=p.E[1];}
   if(!p.active)return;
   const t=now/1000,P=p.P;
   if(now<p.nuzzleUntil){
-    // 쓰다듬어 주면 접속자 캐릭터에게 다가가 부빔
-    const ang=Math.atan2(p.x-me.x,p.z-me.z),tx=me.x+Math.sin(ang)*1.5,tz=me.z+Math.cos(ang)*1.5;
-    p.x+=(tx-p.x)*.06;p.z+=(tz-p.z)*.06;
-    p.g.position.set(p.x,topY(p.x,p.z),p.z);
+    // 접속자가 와서 쓰다듬는 동안 제자리에서 부빔
     p.g.rotation.y=Math.atan2(me.x-p.x,me.z-p.z);
     P.head.rotation.z=Math.sin(t*14)*.2;
     P.tail.rotation.y=Math.sin(t*16)*.6;
@@ -1009,11 +1007,14 @@ function updatePets(){
   }
 }
 function petAnimal(p){
-  p.nuzzleUntil=Date.now()+5000;
-  me.tyaw=Math.atan2(p.x-me.x,p.z-me.z);
-  me.mode='pet';me.modeT=0;me.tx=me.x;me.tz=me.z;me.pending=null;me.join=null;me.hug=null;me.joined=null;
-  toast(p.kind==='cat'?'고양이를 쓰다듬고 있어요 ♡':'강아지를 쓰다듬고 있어요 ♡',2000);
+  // 접속자가 동물 옆으로 걸어가서 쓰다듬기
+  const ang=Math.atan2(me.x-p.x,me.z-p.z);
+  const [x,z]=clampTarget(p.x+Math.sin(ang)*1.8,p.z+Math.cos(ang)*1.8);
+  me.tx=x;me.tz=z;me.pending=null;me.join=null;me.hug=null;me.joined=null;me.petTo=p;me.mode='walk';
+  net.send({t:'mv',id:me.id,x:me.x,z:me.z,tx:x,tz:z,r:me.yaw});
+  toast(p.kind==='cat'?'고양이에게 가요.':'강아지에게 가요.',1600);
 }
+
 let joinTarget=null,joinKind='fire';const joinBtn=$('join'),joinTxt=joinBtn.querySelector('span');
 function showJoin(p,kind='fire'){joinTarget=p;joinKind=kind;joinTxt.textContent=kind==='hug'?'안아주기':kind==='pet'?'쓰다듬기':'함께 불멍하기';joinBtn.classList.toggle('hug',kind==='hug');joinBtn.classList.add('on');placeJoin();}
 function hideJoin(){joinTarget=null;joinBtn.classList.remove('on');}
