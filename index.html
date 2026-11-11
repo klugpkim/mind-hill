@@ -976,7 +976,8 @@ joinBtn.onclick=()=>{const p=joinTarget,k=joinKind;hideJoin();if(p&&!full)(k==='
 let cdUntil=0;
 const cdLeft=()=>Math.max(0,cdUntil-Date.now());
 function startAnim(mode,pending){
-  if(mode==='scream'||mode==='cup')me.tyaw=Math.PI/2;
+  if(mode==='scream')me.tyaw=Math.random()*Math.PI*2-Math.PI;
+  else if(mode==='cup')me.tyaw=Math.PI/2;
   me.mode=mode;me.modeT=0;me.tx=me.x;me.tz=me.z;me.pending=pending;me.join=null;me.hug=null;me.joined=null;
   net.send({t:'an',id:me.id,a:mode,r:me.tyaw,x:me.x,z:me.z});
 }
