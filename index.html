@@ -40,7 +40,7 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 .bub.s.sm{font-size:clamp(11px,calc(13px * var(--k,1)),18px);padding:.42em .9em}
 .bub.glass{border-color:rgba(255,255,255,.2);box-shadow:0 4px 16px rgba(0,20,50,.1),inset 0 1px 0 rgba(255,255,255,.22)}
 .bub.loc{background:linear-gradient(135deg,rgba(255,226,160,.34),rgba(255,255,255,.1))}
-#info{position:absolute;left:calc((100% - var(--navw)) / 2 + 20px);bottom:calc(var(--nav) + 12px + env(safe-area-inset-bottom));font-size:12px;color:#fff;opacity:.55;pointer-events:none;z-index:3}
+#info{position:absolute;left:20px;top:calc(20px + env(safe-area-inset-top));font-size:12px;color:#fff;opacity:.55;pointer-events:none;z-index:3}
 #toast{position:absolute;z-index:4;left:50%;width:max-content;word-break:keep-all;bottom:calc(var(--nav) + 118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(90%,440px);font-size:15px;font-weight:500;line-height:1.5;text-align:center;color:#fff;padding:.55em 1.25em;border-radius:999px;background:rgba(10,20,44,.4);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .8s ease;pointer-events:none}
 #toast.on{opacity:1}
 #join{position:absolute;z-index:4;left:0;top:0;display:none;align-items:center;gap:7px;padding:9px 17px 9px 14px;border:0;border-radius:999px;font:inherit;font-size:13.5px;font-weight:400;letter-spacing:.02em;color:#fff;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;background:linear-gradient(135deg,rgba(255,190,110,.4),rgba(255,255,255,.1));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 6px 22px rgba(0,20,50,.16),inset 0 1px 0 rgba(255,255,255,.3)}
@@ -52,16 +52,19 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #turn{position:absolute;z-index:3;display:flex;gap:8px;right:calc((100% - var(--navw)) / 2 + 14px);bottom:calc(var(--nav) + 40px + env(safe-area-inset-bottom))}
 #turn button{width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
 #turn button:hover,#turn button:active{opacity:.95;background:rgba(255,255,255,.22)}
+#coffee{position:absolute;z-index:3;left:calc((100% - var(--navw)) / 2 + 14px);bottom:calc(var(--nav) + 40px + env(safe-area-inset-bottom));width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
+#coffee:hover,#coffee:active{opacity:.95;background:rgba(255,255,255,.22)}
+#coffee svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+#donate-info{font-size:13px;line-height:1.6;padding:14px;border-radius:14px;background:rgba(255,255,255,.1);margin:0 0 14px;opacity:.85}
 #turn svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-#credit{position:absolute;right:calc((100% - var(--navw)) / 2 + 20px);bottom:calc(var(--nav) + 12px + env(safe-area-inset-bottom));font-size:12px;color:#fff;opacity:.55;pointer-events:none;z-index:3}
 #hint{position:absolute;z-index:4;left:50%;width:max-content;word-break:keep-all;top:calc(52px + env(safe-area-inset-top));transform:translate(-50%,-8px);max-width:min(92%,520px);font-size:14.5px;font-weight:300;line-height:1.6;text-align:center;color:#fff;opacity:0;transition:opacity .9s ease,transform .9s ease;pointer-events:none}
 #hint.on{opacity:1;transform:translate(-50%,0)}
-#modal{position:fixed;inset:0;background:rgba(10,20,40,.42);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
-#modal.on{display:flex}
-#box{width:min(100%,390px);border-radius:22px;padding:20px;background:linear-gradient(135deg,rgba(40,52,82,.62),rgba(25,32,56,.5));-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 60px rgba(0,0,0,.35)}
-#box{text-align:center}
-#box h2{font-weight:500;margin:0 0 4px;font-size:17px}
-#box p{margin:0 0 14px;font-size:13px;line-height:1.65;word-break:keep-all;opacity:.75}
+#modal,#donate{position:fixed;inset:0;background:rgba(10,20,40,.42);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#modal.on,#donate.on{display:flex}
+#box,#dbox{width:min(100%,390px);border-radius:22px;padding:20px;background:linear-gradient(135deg,rgba(40,52,82,.62),rgba(25,32,56,.5));-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#box,#dbox{text-align:center}
+#box h2,#dbox h2{font-weight:500;margin:0 0 4px;font-size:17px}
+#box p,#dbox p{margin:0 0 14px;font-size:13px;line-height:1.65;word-break:keep-all;opacity:.75}
 #txt{width:100%;height:96px;resize:none;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.1);color:#fff;font:16px/1.5 inherit;font-family:inherit;padding:11px;text-align:center;-webkit-user-select:text;user-select:text}
 #txt::placeholder{color:rgba(255,255,255,.5)}
 #txt:placeholder-shown{text-align:left}
@@ -101,7 +104,7 @@ window.__showErr=show;})();
   <button id="join"><svg viewBox="0 0 24 24"><path d="M12 3c.6 3.200-3.500 5-3.500 9.200a3.500 3.500 0 0 0 7 0C15.500 9.500 13 7 12 3z"/><path d="M5 21h14"/></svg><svg class="ht" viewBox="0 0 24 24"><path d="M12 20s-7.500-4.500-7.500-10A4.200 4.200 0 0 1 12 7.500 4.200 4.200 0 0 1 19.500 10C19.500 15.500 12 20 12 20z"/></svg><span>함께 불멍하기</span></button>
   <div id="hint">모든 내용은 저 언덕 너머로 날아가요,<br>안심하고 고민을 털어놓아 봐요</div>
   <div id="turn"><button id="vl" aria-label="왼쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M14.500 5.500 8 12l6.500 6.500"/></svg></button><button id="vr" aria-label="오른쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M9.500 5.500 16 12l-6.500 6.500"/></svg></button></div>
-  <div id="credit">by. kunilkim</div>
+  <button id="coffee" aria-label="후원하기"><svg viewBox="0 0 24 24"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3c-.8 1 .8 1.8 0 3M12 3c-.8 1 .8 1.8 0 3"/></svg></button>
   <div id="full">지금은 언덕이 가득 찼어요.<br>잠시 후에 다시 와주세요.</div>
   <div id="loading">
     <svg viewBox="0 0 204 84" aria-hidden="true">
@@ -132,6 +135,14 @@ window.__showErr=show;})();
       <button class="btn glass" id="cancel">취소</button>
       <button class="btn glass" id="send" style="background:linear-gradient(135deg,rgba(130,150,255,.55),rgba(100,120,230,.35))">날리기</button>
     </div>
+  </div>
+</div>
+<div id="donate">
+  <div id="dbox">
+    <h2>언덕을 응원해 주세요</h2>
+    <p>후원은 언덕을 계속 유지하는 데 쓰여요.<br>마음이 닿는다면 작은 후원을 보내 주세요.</p>
+    <div id="donate-info">후원 계좌 또는 링크는 아직 준비 중이에요.</div>
+    <div id="acts"><button class="btn glass" id="donate-close">닫기</button></div>
   </div>
 </div>
 <script type="module">
@@ -968,6 +979,10 @@ $('b3').onclick=()=>{
 };
 $('txt').addEventListener('input',()=>{$('cnt').textContent=$('txt').value.length+'/50';$('err').textContent='';});
 $('cancel').onclick=()=>$('modal').classList.remove('on');
+$('coffee').onclick=()=>$('donate').classList.add('on');
+$('coffee').addEventListener('pointerdown',e=>e.stopPropagation());
+$('donate-close').onclick=()=>$('donate').classList.remove('on');
+$('donate').addEventListener('pointerdown',e=>{if(e.target===$('donate'))$('donate').classList.remove('on');});
 $('modal').addEventListener('pointerdown',e=>{if(e.target===$('modal'))$('modal').classList.remove('on');});
 function submit(){
   if(cdLeft()>0){$('modal').classList.remove('on');ready();return;}
