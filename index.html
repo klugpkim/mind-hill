@@ -101,7 +101,7 @@ window.__showErr=show;})();
     <button class="btn glass" id="b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/><ellipse cx="9" cy="10.6" rx="1.2" ry="1.5" fill="#fff" stroke="none"/><ellipse cx="15" cy="10.6" rx="1.2" ry="1.5" fill="#fff" stroke="none"/><path d="M15 12.9Q13.8 14.3 13.8 15.1A1.2 1.2 0 0 0 16.2 15.1Q16.2 14.3 15 12.9Z" fill="#fff" stroke="none"/></svg><span>소리지르기</span></button>
     <button class="btn glass" id="b2"><svg viewBox="0 0 24 24"><path d="M12 3.2c4.9 0 8.3 3.3 8.3 7.6s-3.4 7.6-8.3 7.6c-.5 0-1 0-1.5-.1L7.6 21v-3.7C5.3 16.4 3.7 14.1 3.7 10.8c0-4.3 3.4-7.6 8.3-7.6z" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/></svg><span>고민 날려보내기</span></button>
     <button class="btn glass" id="b3"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/><path d="M12 8.8c-2.6 0-4.3.9-4.7 2.9-.2 1.1-.5 1.8-1.4 2.4C4.9 14.8 4.2 15.6 4.2 16.8c0 1.9 2.3 2.7 7.8 2.7s7.8-.8 7.8-2.7c0-1.2-.7-2-2.7-3.1-.9-.6-1.2-1.3-1.4-2.4-.4-2-2.1-2.9-4.7-2.9z" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round" stroke-opacity=".95"/></svg><span>명상하기</span></button>
-    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.2 6 10.5A6 6 0 0 1 6 13.5C6 10.2 9 7 12 3z" fill="rgba(255,255,255,.4)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/></svg><span>울기</span></button>
+    <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.2 6 10.5A6 6 0 0 1 6 13.5C6 10.2 9 7 12 3z" fill="rgba(255,255,255,.4)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/></svg><span>울며 털어보내기</span></button>
   </div>
   <div id="info"></div>
   <div id="toast"></div>
@@ -642,11 +642,15 @@ function animChar(e,dt){
   else if(sit)bob=Math.sin(t*1.4)*.03;
   else if(m==='hug')bob=Math.sin(t*2.6)*.04;
   e.lieAm=(e.lieAm||0)+((cry?1:0)-(e.lieAm||0))*Math.min(1,dt*5);
-  c.g.position.y=bob-(m==='sit'?.62:0)-.42*e.lieAm;
-  c.g.rotation.x=1.05*e.lieAm;
+  c.g.position.y=bob-((m==='sit'||cry)?.62:0);
+  c.g.rotation.x=0;
+  // 바닥에 고이는 눈물 웅덩이
+  e.cryT=cry?(e.cryT||0)+dt:Math.max(0,(e.cryT||0)-dt*1.5);
+  if(e.cryT>0&&!e.puddle){const pg=new THREE.CircleGeometry(1,18);e.puddle=new THREE.Mesh(pg,new THREE.MeshBasicMaterial({color:'#8fcdf5',transparent:true,opacity:.6,depthWrite:false}));e.puddle.rotation.x=-Math.PI/2;scene.add(e.puddle);}
+  if(e.puddle){e.puddle.visible=e.cryT>0;const pk=Math.min(1,e.cryT/3);e.puddle.scale.setScalar(.2+1.8*pk);e.puddle.position.set(e.x+(e.sx||0),topY(e.x,e.z)+.03,e.z+(e.sz||0));}
   const lerp=(a,b,k)=>a+(b-a)*k,k=Math.min(1,dt*14);
   const tgt={l0:0,l1:0,a0:0,a1:0,az:0,hx:0,hy:0,mouth:0};
-  if(cry){tgt.l0=-1.6;tgt.l1=-1.6;tgt.a0=-1.7;tgt.a1=-1.7;tgt.az=.35+Math.sin(t*10)*.12;tgt.hx=.55;tgt.mouth=.35;}
+  if(cry){const w=Math.sin(t*8);tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-2.2+w*.45;tgt.a1=-2.2-w*.45;tgt.az=.4;tgt.hx=.5;tgt.mouth=.35;}
   else if(m==='walk'){tgt.l0=sw*.7;tgt.l1=-sw*.7;tgt.a0=-sw*.8;tgt.a1=sw*.8;}
   else if(sit){tgt.l0=-1.45;tgt.l1=-1.45;tgt.a0=-.3;tgt.a1=-.3;}
   else if(m==='scream'){tgt.a0=-2.9;tgt.a1=-2.9;tgt.hx=-.5;tgt.mouth=1;}
@@ -673,7 +677,7 @@ function animChar(e,dt){
   const tears=c.head.userData.tears;
   if(cry){
     if(!tears){c.head.userData.tears=[];for(let i=0;i<14;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),new THREE.MeshBasicMaterial({color:'#c8ecff',transparent:true,opacity:.95,depthWrite:false}));m.scale.set(.001,.001,.001);c.head.add(m);c.head.userData.tears.push(m);}}
-    for(let i=0;i<14;i++){const m=c.head.userData.tears[i],side=i%2?1:-1,ph=(t*2.2+i*.071+e.tearOff)%1,ty=.05-ph*1.1,tx=side*.2;m.visible=true;m.position.set(tx,ty,ezf(tx,ty)+.03);m.scale.setScalar(.15*(1-ph*.3));}
+    for(let i=0;i<14;i++){const m=c.head.userData.tears[i],side=i%2?1:-1,ph=(t*1.5+i*.37+(i%3)*.11)%1,ty=.02-ph*ph*1.25,tx=side*.2;m.visible=ph<.95;m.position.set(tx,ty,ezf(tx,ty)+.03);m.scale.setScalar(.13*(1-ph*.3));}
   }else if(tears){tears.forEach(m=>m.visible=false);}
   if(ts>0){tr.position.set(TX,ty,tz);tr.scale.set(.085*ts,.14*ts,.06*ts);tr.material.opacity=to;}
 }
@@ -1089,7 +1093,7 @@ $('b4').onclick=()=>{
   if(me.mode==='sit'){me.mode='idle';me.joined=null;net.send({t:'an',id:me.id,a:'stand',r:me.tyaw});}
   me.tyaw=Math.atan2(camera.position.x-me.x,camera.position.z-me.z);
   startAnim('cry',null);
-  toast('엉엉 울고 털어 보내요.',2400);
+  toast('엉엉 울면서 털어 보내요.',2400);
 };
 $('b3').onclick=()=>{
   if(full)return;
