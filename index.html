@@ -270,14 +270,6 @@ const LOOKS=[
  {kind:'groom',head:'#1f1b1a',face:'#f1c9a2',body:'#22252d',pants:'#22252d',boot:'#121216',accent:'#f1c9a2'},
  {kind:'toddler',head:'#7a5232',face:'#fbe0c4',body:'#ffe08a',pants:'#fffaf0',boot:'#f6b8c8',accent:'#fbe0c4',scale:.74},
  {kind:'elder',head:'#ecebe6',face:'#f0cfb0',body:'#7a8f6a',pants:'#6a5a4a',boot:'#5a4030',accent:'#f0cfb0'},
- {kind:'cook',head:'#2b2522',face:'#f3cfa8',body:'#ffffff',pants:'#3a3f4d',boot:'#1c1a1e',accent:'#f3cfa8'},
- {kind:'photog',head:'#2b2522',face:'#f3cfa8',body:'#c9a46a',pants:'#4a4a52',boot:'#2a2622',accent:'#f3cfa8'},
- {kind:'farmer',head:'#6a4a32',face:'#e9b98e',body:'#7aa0c4',pants:'#4a6fa5',boot:'#5a3f2a',accent:'#e9b98e'},
- {kind:'artist',head:'#4a3326',face:'#f6d6b6',body:'#e6e0d0',pants:'#5a5f6e',boot:'#2a2622',accent:'#f6d6b6'},
- {kind:'explorer',head:'#33261f',face:'#f5d2ae',body:'#9b7a4f',pants:'#5b4a33',boot:'#4a3322',accent:'#f5d2ae'},
- {kind:'musician',head:'#1f1b1a',face:'#f1c9a2',body:'#3d4a6b',pants:'#2a2d3a',boot:'#121216',accent:'#f1c9a2'},
- {kind:'nun',head:'#2e2e36',face:'#f6dcc5',body:'#2e2e36',pants:'#2e2e36',boot:'#1c1a1e',accent:'#f6dcc5'},
- {kind:'nurse',head:'#3a2a20',face:'#f5d2ae',body:'#ffffff',pants:'#c9d4e0',boot:'#f4f4f4',accent:'#f5d2ae'},
 ];
 
 /* ---------- 월드 / 지형 규칙 ---------- */
@@ -638,17 +630,6 @@ function makeChar(L){
     add(g,sph,'#ffffff',0,1.62,.34,.28,.4,.3);add(g,cap,'#c8363f',0,1.52,.6,.07,.26,.05);
     const bc=new THREE.Mesh(new THREE.BoxGeometry(.78,.56,.24),toon('#8a5a3a'));bc.position.set(0,-1,.05);bc.castShadow=true;arms[1].add(bc);
   }
-  // 손에는 아무것도 들지 않는 새 캐릭터들 (요리사·사진가·농부·화가·탐험가·음악가·수녀·간호사)
-  const bx=(w,h,d,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),toon(col));m.position.set(x,y,z);m.castShadow=true;g.add(m);return m;};
-  const cy=(rt,rb,h,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,16),toon(col));m.position.set(x,y,z);m.castShadow=true;g.add(m);return m;};
-  if(k==='cook'){cy(.3,.26,.42,'#ffffff',0,2.25,0);bx(.5,.8,.05,'#ffffff',0,1.02,.3);}
-  if(k==='photog'){cy(.36,.36,.06,'#4a5a3a',0,2.12,0);bx(.26,.18,.14,'#333333',0,1.25,.36);}
-  if(k==='farmer'){cy(.62,.62,.05,'#e8c063',0,2.12,0);cy(.34,.38,.26,'#e8c063',0,2.3,0);bx(.46,.36,.06,'#4a6fa5',0,1.12,.31);}
-  if(k==='artist'){cy(.42,.38,.1,'#7a4fa3',0,2.14,.02);bx(.5,.7,.05,'#f2ecdd',0,1.02,.31);}
-  if(k==='explorer'){cy(.55,.55,.05,'#8a6a3a',0,2.12,0);cy(.32,.34,.2,'#8a6a3a',0,2.26,0);bx(.46,.55,.22,'#3e6b48',0,1.4,-.42);}
-  if(k==='musician'){cy(.42,.42,.22,'#c94b4b',0,2.1,0);bx(.3,.5,.12,'#b5793e',0,1.3,-.4);bx(.08,.5,.06,'#6e4a2a',0,1.9,-.4);}
-  if(k==='nun'){cy(.5,.62,.5,'#2e2e36',0,2.1,-.08);cy(.42,.42,.08,'#f4f4f4',0,2.2,0);skirt('#2e2e36',.4,.7,.9,.65);bx(.04,.16,.02,'#f4f4f4',0,1.2,.31);}
-  if(k==='nurse'){cy(.3,.34,.1,'#ffffff',0,2.14,-.05);bx(.14,.04,.02,'#e0474c',-.2,1.25,.31);bx(.04,.14,.02,'#e0474c',-.2,1.25,.31);}
   if(k==='hiker'){
     add(g,sph,L.pack,0,1.9,-.64,.58,.82,.46);
     const roll=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,1.05,18),toon('#c0504d'));roll.rotation.z=Math.PI/2;roll.position.set(0,2.85,-.62);roll.castShadow=true;g.add(roll);
@@ -1248,6 +1229,7 @@ function pickCopy(){
   $('donate').querySelector('.lead').textContent=b;
 }
 window.addEventListener('pointerdown',e=>{
+  if(e.target.closest&&e.target.closest('#bar,#turn,#bgm,#donate,#modal,#info,#hint,#toast,#box'))return;
   for(let i=bottles.length-1;i>=0;i--){
     const B=bottles[i],[sx,sy]=toScreen(B.x,WATER+.6,B.z);
     if(Math.hypot(e.clientX-sx,e.clientY-sy)<80){
