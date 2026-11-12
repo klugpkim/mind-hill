@@ -45,11 +45,11 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #toast{position:fixed;z-index:60;left:50%;width:max-content;word-break:keep-all;bottom:calc(var(--nav) + 118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(90%,440px);font-size:15px;font-weight:500;line-height:1.5;text-align:center;color:#fff;padding:.55em 1.25em;border-radius:999px;background:rgba(10,20,44,.4);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .8s ease;pointer-events:none}
 #toast.on{opacity:1}
 #join{position:absolute;z-index:4;left:0;top:0;display:none;align-items:center;gap:7px;padding:9px 17px 9px 14px;border:0;border-radius:999px;font:inherit;font-size:13.5px;font-weight:400;letter-spacing:.02em;color:#fff;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;background:linear-gradient(135deg,rgba(255,190,110,.4),rgba(255,255,255,.1));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 6px 22px rgba(0,20,50,.16),inset 0 1px 0 rgba(255,255,255,.3)}
-#join.on{display:flex;animation:jpop .25s ease-out}
+#join.on{display:flex;animation:jpop .8s cubic-bezier(.22,.7,.2,1) both}
 #join .ht{display:none}#join.hug .ht{display:block}#join.hug svg:not(.ht){display:none}
 #join.hug{background:linear-gradient(135deg,rgba(255,150,170,.4),rgba(255,255,255,.1))}
 #join svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-@keyframes jpop{from{opacity:0}to{opacity:1}}
+@keyframes jpop{from{opacity:0;translate:0 8px;filter:blur(5px)}60%{filter:blur(0)}to{opacity:1;translate:0 0;filter:blur(0)}}
 #turn{position:absolute;z-index:3;display:flex;gap:8px;right:calc((100% - var(--navw)) / 2 + 14px);bottom:calc(var(--nav) + 26px + env(safe-area-inset-bottom))}
 #turn button{width:38px;height:38px;border:0;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:.55;transition:opacity .2s,background .2s}
 #turn button:hover,#turn button:active{opacity:.95;background:rgba(255,255,255,.22)}
