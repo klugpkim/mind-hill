@@ -224,8 +224,8 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const sm01=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
 
-const THEMES=['sunset','rain','night'];
-const THEME_NAMES={sunset:'노을이 지는 언덕',rain:'비 내리는 언덕',night:'달이 뜬 언덕'};
+const THEMES=['sunset','rain','night','snow'];
+const THEME_NAMES={sunset:'노을이 지는 언덕',rain:'비 내리는 언덕',night:'달이 뜬 언덕',snow:'눈 내리는 언덕'};
 const qp=new URLSearchParams(location.search);
 const theme=THEMES.includes(qp.get('theme'))?qp.get('theme'):THEMES[Math.random()*THEMES.length|0];
 
@@ -322,6 +322,8 @@ const PAL={
     grass:['#3f6a3c','#67975a','#9bbd7c'],yellow:'#cfc060',moss:['#7a9a50','#a0b060'],rock:['#2c3646','#475669','#74869a','#8a8a7a'],tree:['#2f5a3a','#4a7d52','#7aa070','#5a4a40'],ink:'#2a3a4a',foam:'#eef3f8',tint:'rgba(60,80,110,.12)',nClouds:18,glint:'#dfe8f2'},
   night:{sky:['#0f1a4a','#3a5aa0'],cloud:['#8a9be0','#5a64b0','#262c68'],sea:['#1d3570','#2f4f94','#4a6cb0'],fog:'#2a3f78',sunCol:'#a8bcff',sunI:.95,sunPos:[22,26,10],hemi:['#7088d0','#203040'],hemiI:.95,
     grass:['#2a5a4a','#3f7a5e','#78a888'],yellow:'#e8cc4a',moss:['#5a8a5a','#9ab060'],rock:['#1e2842','#34466a','#5f7aa6','#6a6a80'],tree:['#1f4a4a','#32705f','#5a9a86','#3a3a48'],ink:'#101830',foam:'#dfe8f5',tint:'rgba(30,50,120,.18)',nClouds:7,glint:'#f6e8a8'},
+  snow:{sky:['#7d93b4','#e6edf5'],cloud:['#f6f9fc','#cfd9e6','#97a6bd'],sea:['#4a6a8c','#7a98b6','#b8cadb'],fog:'#d6e0ea',sunCol:'#f4f0ff',sunI:.8,sunPos:[-14,22,14],hemi:['#e2ebf6','#6a7a8c'],hemiI:1.25,
+    grass:['#8fa8b2','#d0dde3','#fbfdff'],yellow:'#e8d8a0',moss:['#9ab0a2','#d2dfd2'],rock:['#3a4252','#5a6678','#8a98ac','#a8b0b8'],tree:['#2a5a4a','#3f7a62','#7ab098','#5a4a40'],ink:'#2a3a50',foam:'#ffffff',tint:'rgba(120,150,200,.10)',nClouds:14,glint:'#ffffff'},
 }[theme];
 document.body.style.background=PAL.sky[0];
 
@@ -476,7 +478,7 @@ const clouds=[];
     const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,fog:false,opacity:theme==='night'?.96:1}));
     const z=rnd(-560,-280),y=rnd(8,115)*(z<-450?.7:1),s=rnd(110,250)*(w/520*.6+.5)*(-z/380);
     sp.scale.set(s,s*h/w,1);sp.position.set(rnd(-620,620),y,z);
-    sp.userData.v=rnd(.8,3.6)*({sunset:1,rain:2.6,night:.45}[theme]||1);scene.add(sp);clouds.push(sp);
+    sp.userData.v=rnd(.8,3.6)*({sunset:1,rain:2.6,night:.45,snow:.7}[theme]||1);scene.add(sp);clouds.push(sp);
   }
 }
 function lowPolyColor(geo,fn){
@@ -599,6 +601,22 @@ if(theme==='night'){
   const moon=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(glowTex(246,242,228)),transparent:true,fog:false,depthWrite:false}));
   moon.scale.set(80,80,1);moon.position.set(210,330,-420);scene.add(moon);
   const disc=new THREE.Mesh(new THREE.CircleGeometry(15,32),new THREE.MeshBasicMaterial({color:'#f6f2e4',fog:false}));disc.position.set(210,330,-419);disc.lookAt(0,0,0);scene.add(disc);
+}
+let snow=null;
+if(theme==='snow'){
+  // 눈송이: 크기·투명도·낙하 속도·흔들림이 제각각이고 가장자리가 부드럽게 번지는 눈 (셰이더에서 낙하/흔들림 처리)
+  const n=2200,pos=new Float32Array(n*3),sz=new Float32Array(n),al=new Float32Array(n),fl=new Float32Array(n),ph=new Float32Array(n),am=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    pos.set([rnd(-60,60),rnd(-12,40),rnd(-30,80)],i*3);
+    const q=Math.pow(Math.random(),1.7);                    // 대부분 작고 소수만 큼직하게
+    sz[i]=1.3+5.2*q;al[i]=.3+.6*Math.random()*(1-.35*q);fl[i]=1.1+1.5*Math.random()+q*.9;ph[i]=Math.random()*6.28;am[i]=.5+Math.random()*1.4;
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  for(const [k,a] of [['aSize',sz],['aAlpha',al],['aFall',fl],['aPhase',ph],['aAmp',am]])g.setAttribute(k,new THREE.BufferAttribute(a,1));
+  const mat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,fog:false,uniforms:{uTime:{value:0},uScale:{value:1}},
+    vertexShader:'attribute float aSize;attribute float aAlpha;attribute float aFall;attribute float aPhase;attribute float aAmp;uniform float uTime;uniform float uScale;varying float vA;void main(){vec3 p=position;p.y=mod(p.y-uTime*aFall+12.,52.)-12.;p.x+=sin(uTime*.6*aFall+aPhase)*aAmp;p.z+=cos(uTime*.45*aFall+aPhase*1.3)*aAmp*.6;vec4 mv=modelViewMatrix*vec4(p,1.);vA=aAlpha*smoothstep(-12.,-8.,p.y);gl_PointSize=aSize*uScale*170./max(-mv.z,1.);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'varying float vA;void main(){float d=length(gl_PointCoord-.5)*2.;float a=pow(1.-smoothstep(0.,1.,d),1.6)*vA;gl_FragColor=vec4(1.,1.,1.,a);}'});
+  snow=new THREE.Points(g,mat);snow.frustumCulled=false;scene.add(snow);
 }
 let rain=null;
 if(theme==='rain'){
@@ -1945,6 +1963,7 @@ function frame(now){
   const mp=motes.p.geometry.attributes.position;
   for(let i=0;i<mp.count;i++){let x=mp.getX(i)+motes.vel[i*2]*dt;if(x>28)x=-44;mp.setXYZ(i,x,1.2+Math.sin(T*1.1+motes.vel[i*2+1])*1.1+((i*37)%10)*.18,mp.getZ(i));}
   mp.needsUpdate=true;
+  if(snow){snow.material.uniforms.uTime.value=T;snow.material.uniforms.uScale.value=renderer.getPixelRatio();}
   if(rain){const rp=rain.geometry.attributes.position;for(let i=0;i<rp.count;i+=2){let y=rp.getY(i)-30*dt;if(y<-12)y+=52;const x=rp.getX(i);rp.setXYZ(i,x,y,rp.getZ(i));rp.setXYZ(i+1,x+.15,y-1.2,rp.getZ(i+1));}rp.needsUpdate=true;}
   updateCrash(T,dt);
   if(qp.has('closeup')){const gy=topY(me.x,me.z);camera.position.set(me.x+4,gy+3.8,me.z+8.5);camera.lookAt(me.x,gy+2.6,me.z);}
