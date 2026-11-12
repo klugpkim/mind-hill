@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<meta name="format-detection" content="telephone=no,address=no,email=no">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-visual">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="마음언덕"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#64714f">
 <title>마음 날리는 언덕</title>
@@ -41,7 +42,7 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 .bub.glass{border-color:rgba(255,255,255,.2);box-shadow:0 4px 16px rgba(0,20,50,.1),inset 0 1px 0 rgba(255,255,255,.22)}
 .bub.loc{background:linear-gradient(135deg,rgba(255,226,160,.34),rgba(255,255,255,.1))}
 #info{position:absolute;left:50%;transform:translateX(-50%);top:calc(20px + env(safe-area-inset-top));font-size:12px;color:#fff;opacity:.55;pointer-events:none;z-index:3}
-#toast{position:absolute;z-index:4;left:50%;width:max-content;word-break:keep-all;bottom:calc(var(--nav) + 118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(90%,440px);font-size:15px;font-weight:500;line-height:1.5;text-align:center;color:#fff;padding:.55em 1.25em;border-radius:999px;background:rgba(10,20,44,.4);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .8s ease;pointer-events:none}
+#toast{position:fixed;z-index:60;left:50%;width:max-content;word-break:keep-all;bottom:calc(var(--nav) + 118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(90%,440px);font-size:15px;font-weight:500;line-height:1.5;text-align:center;color:#fff;padding:.55em 1.25em;border-radius:999px;background:rgba(10,20,44,.4);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .8s ease;pointer-events:none}
 #toast.on{opacity:1}
 #join{position:absolute;z-index:4;left:0;top:0;display:none;align-items:center;gap:7px;padding:9px 17px 9px 14px;border:0;border-radius:999px;font:inherit;font-size:13.5px;font-weight:400;letter-spacing:.02em;color:#fff;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;background:linear-gradient(135deg,rgba(255,190,110,.4),rgba(255,255,255,.1));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 6px 22px rgba(0,20,50,.16),inset 0 1px 0 rgba(255,255,255,.3)}
 #join.on{display:flex;animation:jpop .25s ease-out}
@@ -67,7 +68,7 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #dbox .by{margin:0 0 22px;font-size:12px;opacity:.6}
 #donate-info{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.1);margin:0 0 20px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 #donate-info .tlogo{height:22px;width:22px;border-radius:6px;object-fit:cover}
-#donate-info .num{font-size:15px;font-weight:500;letter-spacing:.04em}
+#donate-info .num{font-size:15px;font-weight:500;letter-spacing:.04em;color:#fff;-webkit-text-fill-color:#fff;text-decoration:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #copy-acct{background:none;border:0;box-shadow:none;padding:2px 4px;font-size:11px;color:#fff;opacity:.5;text-decoration:underline;text-underline-offset:3px;cursor:pointer;width:auto}
 #donate-info .bank{font-size:13px;opacity:.85}
 #dbox h2{margin:0 0 14px;font-size:24px;line-height:1.35}
@@ -147,7 +148,6 @@ window.__showErr=show;})();
     <button class="btn glass" id="b4"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.2 6 10.5A6 6 0 0 1 6 13.5C6 10.2 9 7 12 3z" fill="rgba(255,255,255,.4)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/></svg><span>울기</span></button>
   </div>
   <div id="info"></div>
-  <div id="toast"></div>
   <button id="join"><svg viewBox="0 0 24 24"><path d="M12 3c.6 3.200-3.500 5-3.500 9.200a3.500 3.500 0 0 0 7 0C15.500 9.500 13 7 12 3z"/><path d="M5 21h14"/></svg><svg class="ht" viewBox="0 0 24 24"><path d="M12 20s-7.500-4.500-7.500-10A4.200 4.200 0 0 1 12 7.500 4.200 4.200 0 0 1 19.500 10C19.500 15.500 12 20 12 20z"/></svg><span>함께 불멍하기</span></button>
   <div id="hint">모든 내용은 저 언덕 너머로 날아가요,<br>안심하고 고민을 털어놓아 봐요</div>
   <button id="bgm" aria-label="배경음악 켜기/끄기"></button>
@@ -174,6 +174,7 @@ window.__showErr=show;})();
     <span>풍경을 그리는 중…</span>
   </div>
 </div>
+<div id="toast"></div>
 <div id="modal">
   <div id="box">
     <h2>마음 날려보내기</h2>
@@ -659,7 +660,7 @@ if(theme==='snow'){
 }
 let rain=null;
 if(theme==='rain'){
-  const n=1400,pos=new Float32Array(n*6);
+  const n=850,pos=new Float32Array(n*6);
   for(let i=0;i<n;i++){const x=rnd(-60,60),y=rnd(-12,40),z=rnd(-50,50);pos.set([x,y,z,x+.15,y-1.2,z],i*6);}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
   rain=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:'#e6eefa',transparent:true,opacity:.5,fog:false}));rain.frustumCulled=false;scene.add(rain);
@@ -1902,7 +1903,7 @@ window.addEventListener('pointerdown',e=>{
 for(let i=0;i<3;i++)spawnBottle();
 // 병은 계속 흘러들어옴: 3개 미만이면 다시 보충
 setInterval(()=>{if(bottles.length<3)spawnBottle();},5000);
-$('copy-acct').onclick=async()=>{const t='100008965072';try{await navigator.clipboard.writeText(t);toast('계좌번호를 복사했어요.',1600);}catch(e){toast('복사하지 못했어요. 직접 선택해 주세요.',2000);}};
+$('copy-acct').onclick=async()=>{const t='100008965072';try{await navigator.clipboard.writeText(t);toast('계좌번호를 복사했어요.',1600);}catch(e){toast('복사하지 못했어요. QR로 송금해 주세요.',2000);}};
 $('donate').addEventListener('pointerdown',e=>{if(e.target===$('donate'))$('donate').classList.remove('on');});
 $('modal').addEventListener('pointerdown',e=>{if(e.target===$('modal'))$('modal').classList.remove('on');});
 function submit(){
