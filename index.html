@@ -296,6 +296,9 @@ const PIER=(()=>{const pa=Math.atan2((64-IC[1])/IRZ,(34-IC[0])/IRX)-.2,a=pa+1.35
 const pierDeckY=v=>PIER.dy+(PIER.lowY-PIER.dy)*sm01((v-PIER.v1)/(PIER.v2-PIER.v1));
 const pierUV=(x,z)=>{const dx=x-PIER.x0,dz=z-PIER.z0;return [dx*PIER.tx+dz*PIER.tz,dx*PIER.nx+dz*PIER.nz];};
 const inPier=(x,z)=>{const [u,v]=pierUV(x,z);return Math.abs(u)<PIER.W/2-.5&&v>-1&&v<PIER.len-.6;};
+const GRASS_LIT=new THREE.Color(0);   // PAL 준비 후 설정
+// 바닥의 밝은 연두색 풀밭 얼룩 (부드러운 큰 무늬)
+const patchAt=(x,z)=>sm01((vn(x*.05+11,z*.05+3)-.54)/.16);
 const topY=(x,z)=>{
   const y=stairBlend(x,z,topBase(x,z)),[u,v]=pierUV(x,z);
   if(Math.abs(u)<PIER.W/2&&v>-1.5&&v<PIER.len){const k=sm01((v+1.5)/1.5)*sm01((PIER.W/2-Math.abs(u))/.5);return y+(pierDeckY(v)+.1-y)*k;}
@@ -321,6 +324,7 @@ function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15
 function hex2rgb(h){const n=parseInt(h.slice(1),16);return [n>>16,n>>8&255,n&255];}
 function mixHex(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return `rgb(${[0,1,2].map(i=>Math.round(A[i]+(B[i]-A[i])*t)).join(',')})`;}
 const tri=(cols,L)=>L<.5?mixHex(cols[0],cols[1],L/.5):mixHex(cols[1],cols[2],(L-.5)/.5);
+GRASS_LIT.set(tri(PAL.grass,.97)).lerp(new THREE.Color('#eef07a'),.4);
 function shade(hex,p){
   let r,g,b;
   if(hex[0]==='#'){const n=parseInt(hex.slice(1),16);r=n>>16;g=n>>8&255;b=n&255;}else[r,g,b]=hex.match(/\d+/g).map(Number);
@@ -433,6 +437,7 @@ function buildIsland(){
   const g1=new THREE.BufferGeometry();g1.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g1.setIndex(idx);
   const top=new THREE.Mesh(flatPaint(g1,(c,cx,cy,cz,ny,f)=>{
     c.set(tri(PAL.grass,clamp(.55+cy*.04+(hsh(f*.37,5)-.5)*.22,0,1)));
+    const pt=patchAt(cx,cz);if(pt>0)c.lerp(GRASS_LIT,pt*.8);
     const ed=edgeDist(cx,cz);if(ed<1.3)c.multiplyScalar(.8+.2*sm01(ed/1.3));
   }),lamb);top.receiveShadow=true;scene.add(top);
   const ring=[];
@@ -1484,6 +1489,83 @@ STAIRS.forEach((st,i)=>{
     build(cyl,posts);build(cyl2,collars);build(cyl2,bol);build(cyl2,caps);
   }
 }
+/* 모든 테마: 가장 큰 뒤쪽 바위 언덕의 꼭대기에서 쏟아져 내리는 폭포 — 실제 바위 표면에 붙여(레이캐스트) 맨 위부터 바닥까지 이어지고, 바닥엔 물보라·물안개·작은 못 */
+const FALLS={tex:null,tex2:null,mist:[],spray:[],pool:[]};
+{
+  const R=mulberry32(88);
+  const cv=cnv(64,256),g=cv.getContext('2d');
+  const gr=g.createLinearGradient(0,0,64,0);gr.addColorStop(0,'rgba(205,233,255,.8)');gr.addColorStop(.5,'rgba(255,255,255,.95)');gr.addColorStop(1,'rgba(200,228,252,.8)');
+  g.fillStyle=gr;g.fillRect(0,0,64,256);
+  for(let i=0;i<36;i++){g.fillStyle=`rgba(${R()<.55?'255,255,255':'150,205,245'},${.3+R()*.5})`;const x=R()*64,w=1.5+R()*4.5,y=R()*256,h=50+R()*110;g.fillRect(x,y,w,h);g.fillRect(x,y-256,w,h);}
+  const tex=ctex(cv,true);tex.repeat.set(1,2.2);const tex2=ctex(cv,true);tex2.repeat.set(1,1.4);tex2.offset.x=.3;FALLS.tex=tex;FALLS.tex2=tex2;
+  const tint={sunset:'#fff3ea',rain:'#dceaf6',night:'#adc2ee'}[theme]||'#ffffff';
+  const mk=(map,op)=>new THREE.MeshBasicMaterial({map,color:tint,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,fog:false});
+  const mat=mk(tex,.62),mat2=mk(tex2,.36);
+  const big=CRAGS.filter(m=>m.position.z<-30).sort((a,b)=>b.scale.y-a.scale.y)[0];big.updateMatrixWorld(true);
+  const RC=new THREE.Raycaster(),FWD=new THREE.Vector3(0,0,-1),DWN=new THREE.Vector3(0,-1,0),O=new THREE.Vector3();
+  const zAt=(x,y)=>{O.set(x,y,big.position.z+big.scale.z*2+6);RC.set(O,FWD);const h=RC.intersectObject(big)[0];return h?h.point.z:null;};
+  const topAt=(x,z)=>{O.set(x,big.position.y+big.scale.y+8,z-.5);RC.set(O,DWN);const h=RC.intersectObject(big)[0];return h?h.point.y:big.position.y+big.scale.y;};
+  const cx=big.position.x-big.scale.x*.12,botY=.3,rows=40;
+  const dotMat=(op)=>new THREE.SpriteMaterial({map:dotTex,transparent:true,depthWrite:false,fog:false,opacity:op,color:'#f6fbff'});
+  [[0,3.2],[3.1,1.3]].forEach(([off,w],k)=>{
+    const sx0=cx+off,zTop=zAt(sx0,big.position.y+big.scale.y-1.5)??big.position.z+big.scale.z,topS=topAt(sx0,zTop)+.08;
+    const geo=new THREE.PlaneGeometry(1,1,1,rows),pa=geo.attributes.position;
+    for(let i=0;i<pa.count;i++){
+      const sg=pa.getX(i)>0?1:-1,u=pa.getY(i)+.5,yy=botY+u*(topS-botY);
+      // 위에서는 좁게 모여 쏟아지고, 내려오며 퍼지며 살짝 굽이침
+      const xx=sx0+sg*(w/2)*(.62+.55*(1-u))+Math.sin(u*7+k*2)*.3;
+      const zz=(zAt(xx,yy)??zTop-big.scale.z*.3*(1-u))+.32;
+      pa.setXYZ(i,xx,yy,zz);
+    }
+    pa.needsUpdate=true;
+    const m1=new THREE.Mesh(geo,mat),m2=new THREE.Mesh(geo,mat2);m1.renderOrder=3;m2.renderOrder=4;m2.position.z=.14;scene.add(m1,m2);
+    // 꼭대기 포말
+    const tsp=new THREE.Sprite(dotMat(.55));tsp.scale.set(w*2.4,1.3,1);tsp.position.set(sx0,topS,zTop+.8);tsp.userData={op:.55,ph:R()*6};scene.add(tsp);FALLS.mist.push(tsp);
+    // 바닥: 물안개 + 작은 못 + 물보라
+    const bz=(zAt(sx0,botY+.6)??big.position.z+big.scale.z)+2.2,gy=topY(sx0,bz);
+    for(const [sc,op] of [[8,.38],[13,.18]]){const sp=new THREE.Sprite(dotMat(op));sp.scale.set(sc*(w/3+.5),sc*.5,1);sp.position.set(sx0,gy+1,bz);sp.userData={op,ph:R()*6};scene.add(sp);FALLS.mist.push(sp);}
+    const pool=new THREE.Mesh(new THREE.CircleGeometry(1,28),new THREE.MeshBasicMaterial({color:'#cfe8fa',transparent:true,opacity:.6,depthWrite:false,fog:false}));
+    pool.rotation.x=-Math.PI/2;pool.scale.set(w*1.5+2.2,w*.9+1.6,1);pool.position.set(sx0,gy+.07,bz-.6);pool.renderOrder=2;scene.add(pool);FALLS.pool.push(pool);
+    for(let i=0;i<(k?6:12);i++){const sp=new THREE.Sprite(dotMat(.7));sp.userData={x:sx0+(R()-.5)*w*1.3,y:gy+.2,z:bz-.9+R()*.6,ph:R(),sp:.6+R()*.5};scene.add(sp);FALLS.spray.push(sp);}
+  });
+}
+function updateFalls(dt){
+  if(FALLS.tex){FALLS.tex.offset.y=(FALLS.tex.offset.y+dt*.95)%1;FALLS.tex2.offset.y=(FALLS.tex2.offset.y+dt*.55)%1;}
+  for(const sp of FALLS.mist)sp.material.opacity=sp.userData.op*(.8+.2*Math.sin(T*1.3+sp.userData.ph));
+  for(const pl of FALLS.pool)pl.material.opacity=.5+.12*Math.sin(T*2);
+  for(const sp of FALLS.spray){const u=sp.userData,t=(T*u.sp+u.ph)%1;sp.position.set(u.x+Math.sin(t*6+u.ph*9)*.4,u.y+t*2.6,u.z);sp.scale.setScalar(.35+.35*t);sp.material.opacity=.75*(1-t);}
+}
+/* 모든 테마: 밝은 풀밭 얼룩 위에 가는 줄기 끝에 핀 작은 흰 들꽃(데이지) 무리를 군데군데 */
+{
+  const R=mulberry32(91),cent=[];
+  for(let k=0;k<1500&&cent.length<8;k++){
+    const x=-46+R()*76,z=-42+R()*54;
+    if(!inside(x,z,4)||patchAt(x,z)<.55)continue;
+    const [pu,pv]=pierUV(x,z);if(Math.abs(pu)<PIER.W/2+8&&pv>-18&&pv<8)continue;
+    if(Math.hypot(x-STAIRS[0].cx,z-STAIRS[0].cz)<13)continue;
+    if(placed.some(q=>Math.hypot(x-q[0],z-q[1])<3.5)||cent.some(q=>Math.hypot(x-q[0],z-q[1])<9))continue;
+    cent.push([x,z]);
+  }
+  const F=[];
+  for(const [cx,cz] of cent){const n=8+(R()*6|0);for(let i=0;i<n;i++){const a=R()*6.28,d=Math.sqrt(R())*2.6,x=cx+Math.cos(a)*d,z=cz+Math.sin(a)*d;if(!inside(x,z,3))continue;F.push({x,z,h:.5+R()*.35,s:1.5+R()*.6,r:R()*6.28});}}
+  // 데이지 꽃잎: 가운데에서 뻗은 길쭉한 마름모 6장 (납작하게 살짝 위로 들림)
+  const pv=[],pg=new THREE.BufferGeometry();
+  for(let k=0;k<6;k++){const a=k/6*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a),cl=Math.cos(a-.4),sl=Math.sin(a-.4),cr=Math.cos(a+.4),sr=Math.sin(a+.4);
+    const L=[[0,0,0],[cl*.14,.01,sl*.14],[ca*.34,.05,sa*.34],[cr*.14,.01,sr*.14]];
+    pv.push(...L[0],...L[1],...L[2],...L[0],...L[2],...L[3]);}
+  pg.setAttribute('position',new THREE.Float32BufferAttribute(pv,3));pg.computeVertexNormals();
+  const petals=new THREE.InstancedMesh(pg,new THREE.MeshLambertMaterial({color:'#ffffff',side:THREE.DoubleSide}),F.length);
+  const cen=new THREE.InstancedMesh(new THREE.OctahedronGeometry(.07,0),new THREE.MeshLambertMaterial({color:'#f6c93a',flatShading:true}),F.length);
+  const stem=new THREE.InstancedMesh(new THREE.CylinderGeometry(.012,.016,1,4).translate(0,.5,0),new THREE.MeshLambertMaterial({color:'#4f8f3a',flatShading:true}),F.length);
+  const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),v=new THREE.Vector3(),sv=new THREE.Vector3();
+  F.forEach((o,i)=>{
+    const y=topY(o.x,o.z);
+    e.set((R()-.5)*.35,o.r,(R()-.5)*.35);q.setFromEuler(e);v.set(o.x,y+o.h,o.z);sv.setScalar(o.s);m4.compose(v,q,sv);petals.setMatrixAt(i,m4);
+    v.set(o.x,y+o.h+.03*o.s,o.z);sv.setScalar(o.s);m4.compose(v,q,sv);cen.setMatrixAt(i,m4);
+    q.identity();v.set(o.x,y,o.z);sv.set(1,o.h,1);m4.compose(v,q,sv);stem.setMatrixAt(i,m4);
+  });
+  scene.add(petals,cen,stem);
+}
 /* 비 테마: 뒤쪽 바위 언덕 위를 작은 꽃게들이 옆걸음으로 돌아다님 */
 const crabMat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
 function buildCrab(){
@@ -1796,6 +1878,7 @@ function frame(now){
     sun.position.set(PAL.sunPos[0],y,PAL.sunPos[2]);sun.intensity=PAL.sunI*(1-.2*p);
     updatePetals();
   }
+  updateFalls(dt);
   for(const c of clouds){c.position.x+=c.userData.v*dt;if(c.position.x>640)c.position.x=-640;}
   const mp=motes.p.geometry.attributes.position;
   for(let i=0;i<mp.count;i++){let x=mp.getX(i)+motes.vel[i*2]*dt;if(x>28)x=-44;mp.setXYZ(i,x,1.2+Math.sin(T*1.1+motes.vel[i*2+1])*1.1+((i*37)%10)*.18,mp.getZ(i));}
