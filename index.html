@@ -1627,7 +1627,36 @@ function posePelican(c,k){
 }
 const PEL={g:null,ph:'wait',t:0,dur:rnd(5,10),from:null,to:null,k:1,land:null};
 const pelSky=()=>{const a=rnd(0,Math.PI*2);return new THREE.Vector3(IC[0]+Math.cos(a)*115,rnd(22,32),IC[1]+Math.sin(a)*115);};
+/* 노을 테마: 바람이 불어 나무가 흔들릴 때(30초마다) 작은 꽃잎들이 이동 영역 앞쪽에서 화면 왼쪽 → 오른쪽으로 흘러감 */
+const PETALS=[],PF=new THREE.Vector3(),PR=new THREE.Vector3(),PU=new THREE.Vector3();
+function updatePetals(){
+  if(!PETALS.length){
+    // 단순한 꽃잎 모양 4가지: 물방울형, 양끝이 뾰족한 잎, 윗부분이 살짝 파인 둥근 꽃잎, 가늘고 긴 꽃잎
+    const shapes=[
+      g=>{g.moveTo(16,3);g.quadraticCurveTo(28,16,16,29);g.quadraticCurveTo(4,16,16,3);},
+      g=>{g.moveTo(3,16);g.quadraticCurveTo(16,6,29,16);g.quadraticCurveTo(16,26,3,16);},
+      g=>{g.moveTo(16,9);g.quadraticCurveTo(24,2,27,12);g.quadraticCurveTo(28,24,16,29);g.quadraticCurveTo(4,24,5,12);g.quadraticCurveTo(8,2,16,9);},
+      g=>{g.moveTo(16,2);g.quadraticCurveTo(22,16,16,30);g.quadraticCurveTo(10,16,16,2);}
+    ];
+    const texs=shapes.map(f=>{const cv=cnv(32,32),g=cv.getContext('2d');g.fillStyle='#ffe1e9';g.beginPath();f(g);g.fill();g.fillStyle='rgba(255,255,255,.7)';g.save();g.translate(1,-1);g.scale(.55,.55);g.translate(7,7);g.beginPath();f(g);g.fill();g.restore();return ctex(cv);});
+    const gauss=()=>(Math.random()+Math.random()+Math.random()-1.5)/.75;   // 가운데로 몰리는 분포
+    for(let i=0;i<26;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:texs[i%4],transparent:true,depthWrite:false,fog:false,opacity:0,color:i%3?'#ffffff':'#ffeef3'}));sp.visible=false;scene.add(sp);
+      PETALS.push({sp,d:Math.random()*1.3,ox:gauss()*3,oy:gauss()*2,ph:Math.random()*6,s:rnd(.18,.32)});}
+  }
+  // 한 무리가 8초 동안 지나가며, 뒤로 갈수록 살짝 퍼짐 (나무 흔들림과 같은 시각에 시작)
+  const t=(T+20)%30,D=46,DUR=8;
+  camera.getWorldDirection(PF);PR.crossVectors(PF,camera.up).normalize();PU.crossVectors(PR,PF).normalize();
+  const hw=D*Math.tan(camera.fov*Math.PI/360)*camera.aspect*1.15;
+  for(const P of PETALS){
+    const p=(t-P.d)/DUR,sp=P.sp;
+    if(p<=0||p>=1){sp.visible=false;continue;}
+    const sprd=1+p*.9,x=-hw+2*hw*p+P.ox*sprd,y=1+3*Math.sin(Math.PI*p)+P.oy*sprd+Math.sin(p*8+P.ph)*.7;
+    sp.position.copy(camera.position).addScaledVector(PF,D).addScaledVector(PR,x).addScaledVector(PU,y);
+    sp.scale.setScalar(P.s);sp.material.opacity=.85*Math.sqrt(Math.sin(Math.PI*p));sp.material.rotation=T*1.2+P.ph;sp.visible=true;
+  }
+}
 function updatePelican(dt){
+  if(theme!=='rain')return;   // 비 테마에서만 등장
   const P=PEL;
   if(!P.g){const {x0,z0,nx,nz,tx,tz,dy,len}=PIER;P.g=buildPelican();P.g.visible=false;scene.add(P.g);P.land=new THREE.Vector3(x0+nx*(len-2.4)-tx*1.8,dy+.1,z0+nz*(len-2.4)-tz*1.8);}
   P.t+=dt;
@@ -1760,11 +1789,12 @@ function frame(now){
   for(const r of rays)r.material.opacity=.07+.03*Math.sin(T*.5+r.userData.ph);
   if(theme==='sunset'){const ph=(T+20)%30,env=ph<4?Math.sin(Math.PI*ph/4):0;if(env>0||TREES[0].rotation.z!==0)for(let i=0;i<TREES.length;i++){const w=env*.06*Math.sin(ph*5+i*.9);TREES[i].rotation.z=w;TREES[i].rotation.x=w*.4;}}
   if(theme==='sunset'){
-    const p=.5-.5*Math.cos(T*.07),U=seaMat.uniforms,y=9-3.5*p;
+    const p=.5-.5*Math.cos(T*.18),U=seaMat.uniforms,y=9-3.5*p;   // 약 35초 주기
     skyMat.uniforms.top.value.lerpColors(SS.sA,SS.sB,p);skyMat.uniforms.hor.value.lerpColors(SS.hA,SS.hB,p);
     scene.fog.color.lerpColors(SS.fA,SS.fB,p);if(U.fogC)U.fogC.value.lerpColors(SS.fA,SS.fB,p);
     skyMat.uniforms.sunDir.value.set(PAL.sunPos[0],y,PAL.sunPos[2]).normalize();
     sun.position.set(PAL.sunPos[0],y,PAL.sunPos[2]);sun.intensity=PAL.sunI*(1-.2*p);
+    updatePetals();
   }
   for(const c of clouds){c.position.x+=c.userData.v*dt;if(c.position.x>640)c.position.x=-640;}
   const mp=motes.p.geometry.attributes.position;
