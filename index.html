@@ -117,7 +117,7 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #row{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;margin-top:8px;font-size:12px;text-align:center}
 #err{color:#ffb0b0;min-height:1.3em}
 #acts{display:flex;gap:10px;justify-content:center;margin-top:10px}
-#acts .btn{min-width:104px;border:0;text-shadow:none;box-shadow:0 8px 28px rgba(0,20,50,.18),inset 0 1px 0 rgba(255,255,255,.28)}
+#acts .btn{min-width:104px;border-radius:22px;border:0;text-shadow:none;box-shadow:0 8px 28px rgba(0,20,50,.18),inset 0 1px 0 rgba(255,255,255,.28)}
 #full{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(10,20,40,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:17px;line-height:1.7;padding:20px;z-index:6}
 #loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#64714f;z-index:20;font-size:15px;font-weight:300;letter-spacing:.04em;color:#fff;transition:opacity .5s}
 #loading svg{width:min(64vw,230px);height:auto;overflow:visible}
@@ -263,6 +263,11 @@ const LOOKS=[
  {kind:'groom',head:'#1f1b1a',face:'#f1c9a2',body:'#22252d',pants:'#22252d',boot:'#121216',accent:'#f1c9a2'},
  {kind:'toddler',head:'#7a5232',face:'#fbe0c4',body:'#ffe08a',pants:'#fffaf0',boot:'#f6b8c8',accent:'#fbe0c4',scale:.74},
  {kind:'elder',head:'#ecebe6',face:'#f0cfb0',body:'#7a8f6a',pants:'#6a5a4a',boot:'#5a4030',accent:'#f0cfb0'},
+ {kind:'chef',head:'#3b2a22',face:'#f3cfa8',body:'#f6f6f4',pants:'#3a3f4a',boot:'#2a2a2e',accent:'#f3cfa8'},
+ {kind:'painter',head:'#4a2f26',face:'#f6d6b6',body:'#6a8fb8',pants:'#4a4a58',boot:'#8a5a3a',accent:'#f6d6b6'},
+ {kind:'guitarist',head:'#2a1c14',face:'#eac19a',body:'#a0463c',pants:'#2f3a50',boot:'#3a2a22',accent:'#eac19a'},
+ {kind:'doctor',head:'#2b2522',face:'#f5d2ae',body:'#f4f6f8',pants:'#5a8a9a',boot:'#f4f4f4',accent:'#f5d2ae'},
+ {kind:'farmer',head:'#6a4a32',face:'#e9b98e',body:'#e8d9a0',pants:'#4a6a9a',boot:'#5a3f2a',accent:'#e9b98e'},
 ];
 
 /* ---------- 월드 / 지형 규칙 ---------- */
@@ -723,6 +728,35 @@ function makeChar(L){
     add(g,sph,'#f4f0e6',0,1.98,.3,.3,.1,.26);
     const cn=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,2.1,8),toon('#7a5a3a'));cn.position.set(0,-.6,.18);arms[1].add(cn);add(arms[1],sph,'#7a5a3a',0,.46,.18,.1,.1,.1);
   }
+  if(k==='chef'){
+    add(g,sph,'#d9454f',0,1.95,.36,.3,.1,.2);add(g,sph,'#2f4a6a',0,1.25,.46,.5,.5,.12);
+    for(const y of [1.62,1.45])add(g,sph,'#d8d8d8',0,y,.56,.05,.05,.03);
+    const pn=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.06,18),toon('#9aa0a8'));pn.position.set(0,-.95,.3);pn.castShadow=true;arms[1].add(pn);
+    const hd=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.5,8),toon('#3a2a22'));hd.rotation.x=Math.PI/2;hd.position.set(0,-.95,.7);arms[1].add(hd);
+  }
+  if(k==='painter'){
+    for(const [x,y,c] of [[-.2,1.7,'#e8553d'],[.25,1.35,'#f2c230'],[.1,1.85,'#4aa86a'],[-.3,1.3,'#8a5ad8']])add(g,sph,c,x,y,.54,.1,.1,.05);
+    const pl=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.05,20),toon('#d9b27a'));pl.rotation.x=Math.PI/2.3;pl.position.set(0,-.95,.3);pl.castShadow=true;arms[1].add(pl);
+    [['#e8553d',-.16,-.06],['#f2c230',0,.12],['#3a8ad8',.16,-.04]].forEach(([c,x,y])=>add(arms[1],sph,c,x,-.95+y,.34,.07,.07,.06));
+    const br=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,1.1,6),toon('#7a5a3a'));br.position.set(0,-.55,.2);br.rotation.x=.3;arms[0].add(br);add(arms[0],sph,'#e8553d',0,-1.14,.34,.07,.09,.07);
+  }
+  if(k==='guitarist'){
+    const gt=new THREE.Group();gt.position.set(0,1.7,-.5);gt.rotation.z=.6;g.add(gt);
+    add(gt,sph,'#c8863a',0,-.35,0,.5,.58,.17);add(gt,sph,'#c8863a',0,.18,0,.38,.4,.16);add(gt,sph,'#2a1c14',0,-.18,.14,.15,.15,.05);
+    const nk=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.1,8),toon('#4a2f1f'));nk.position.set(0,.95,0);gt.add(nk);add(gt,sph,'#4a2f1f',0,1.55,0,.1,.15,.06);
+    ring(g,.62,.035,'#2a1c14',0,1.65,0,Math.PI/2.4,1,.6);
+  }
+  if(k==='doctor'){
+    ring(g,.3,.035,'#333840',0,1.95,.22,Math.PI/2,1,1.1);add(g,sph,'#c0c6cc',0,1.38,.54,.09,.09,.05);
+    add(g,sph,'#d9454f',.32,1.72,.55,.12,.04,.03);add(g,sph,'#d9454f',.32,1.72,.55,.04,.12,.03);
+    const cb=new THREE.Mesh(new THREE.BoxGeometry(.5,.66,.05),toon('#7a5a3a'));cb.position.set(0,-.9,.25);cb.rotation.x=.15;cb.castShadow=true;arms[1].add(cb);
+    const pp=new THREE.Mesh(new THREE.BoxGeometry(.42,.56,.03),toon('#fbfbf4'));pp.position.set(0,-.9,.285);pp.rotation.x=.15;arms[1].add(pp);
+  }
+  if(k==='farmer'){
+    add(g,sph,L.pants,0,1.5,.38,.44,.46,.3);add(g,sph,'#d8c050',-.2,1.78,.6,.06,.06,.03);add(g,sph,'#d8c050',.2,1.78,.6,.06,.06,.03);
+    add(g,sph,'#d9454f',0,1.95,.36,.3,.1,.2);
+    for(const [x,z] of [[-.12,-.05],[0,.08],[.12,-.02]]){const st=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1.1,5),toon('#c8a840'));st.position.set(x,-.75,.25+z);st.rotation.z=x*1.4;arms[1].add(st);add(arms[1],sph,'#e8c350',x*2.1,-1.28,.25+z,.07,.2,.07);}
+  }
   const head=new THREE.Group();head.position.set(0,2.42,0);g.add(head);
   const hs=[.84,.78,.74];
   if(k==='toddler'){head.scale.setScalar(1.12);}
@@ -742,6 +776,12 @@ function makeChar(L){
     for(const sx of [-1,1]){const cx=sx*.5,cy=-.12;add(head,sph,'#ff9fb0',cx,cy,ez(cx,cy)-.02,.13,.08,.05);}
     add(head,sph,'#f48fb1',0,my-.02,ez(0,my)+.02,.1,.1,.06);ring(head,.09,.02,'#f48fb1',0,my-.1,ez(0,my)+.04,0);
   }
+  const dome=(col,y,sx,sy,sz)=>{const d=new THREE.Mesh(new THREE.SphereGeometry(1,24,12,0,Math.PI*2,0,Math.PI/2),toon(col));d.scale.set(sx,sy,sz);d.position.set(0,y,0);d.castShadow=true;head.add(d);return d;};
+  if(k==='chef'){const t=new THREE.Mesh(new THREE.CylinderGeometry(.5,.56,.44,24),toon('#ffffff'));t.position.set(0,.8,0);t.castShadow=true;head.add(t);add(head,sph,'#ffffff',0,1.1,0,.62,.42,.6);add(head,sph,'#ffffff',.3,1.0,.05,.34,.3,.34);add(head,sph,'#ffffff',-.3,1.0,.05,.34,.3,.34);add(head,sph,'#2b2522',0,-.12,ez(0,-.12)-.01,.24,.05,.05);}
+  if(k==='painter'){const bt=add(head,sph,'#c8363f',.14,.72,0,.8,.28,.78);bt.rotation.z=-.12;add(head,sph,'#c8363f',.1,.98,0,.05,.09,.05);add(head,sph,'#2b2522',0,-.5,ez(0,-.5)-.04,.12,.1,.06);}
+  if(k==='guitarist'){dome('#3a7a6a',.3,.9,.62,.8);ring(head,.88,.07,'#2f6a5a',0,.3,0,Math.PI/2,1,.9);}
+  if(k==='doctor'){dome('#4fb3b0',.34,.88,.58,.78);}
+  if(k==='farmer'){const br=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,.06,32),toon('#e6c26a'));br.position.set(0,.5,0);br.castShadow=true;head.add(br);const dm=new THREE.Mesh(new THREE.SphereGeometry(1,24,12,0,Math.PI*2,0,Math.PI/2),toon('#e6c26a'));dm.scale.set(.66,.55,.66);dm.position.set(0,.52,0);dm.castShadow=true;head.add(dm);ring(head,.66,.05,'#c8363f',0,.56,0,Math.PI/2,1,1);}
   const glasses=()=>{for(const sx of [-1,1])ring(head,.13,.025,'#2a2a30',sx*.2,.08,ez(sx*.2,.08)+.03,0);const br=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.14,6),toon('#2a2a30'));br.rotation.z=Math.PI/2;br.position.set(0,.1,ez(0,.1)+.03);head.add(br);};
   if(k==='dad'){glasses();add(head,sph,'#4a4540',0,-.5,ez(0,-.5)-.03,.42,.12,.08);}
   if(k==='elder'){glasses();}
