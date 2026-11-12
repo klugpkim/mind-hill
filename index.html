@@ -302,6 +302,7 @@ const PIER=(()=>{const pa=Math.atan2((64-IC[1])/IRZ,(34-IC[0])/IRX)-.2,a=pa+1.35
 const pierDeckY=v=>PIER.dy+(PIER.lowY-PIER.dy)*sm01((v-PIER.v1)/(PIER.v2-PIER.v1));
 const pierUV=(x,z)=>{const dx=x-PIER.x0,dz=z-PIER.z0;return [dx*PIER.tx+dz*PIER.tz,dx*PIER.nx+dz*PIER.nz];};
 const inPier=(x,z)=>{const [u,v]=pierUV(x,z);return Math.abs(u)<PIER.W/2-.5&&v>-1&&v<PIER.len-.6;};
+const SNOW_C=new THREE.Color('#f2f6fb');
 const GRASS_LIT=new THREE.Color(0);   // PAL 준비 후 설정
 // 바닥의 밝은 연두색 풀밭 얼룩 (부드러운 큰 무늬)
 const patchAt=(x,z)=>sm01((vn(x*.05+11,z*.05+3)-.54)/.16);
@@ -323,7 +324,7 @@ const PAL={
   night:{sky:['#0f1a4a','#3a5aa0'],cloud:['#8a9be0','#5a64b0','#262c68'],sea:['#1d3570','#2f4f94','#4a6cb0'],fog:'#2a3f78',sunCol:'#a8bcff',sunI:.95,sunPos:[22,26,10],hemi:['#7088d0','#203040'],hemiI:.95,
     grass:['#2a5a4a','#3f7a5e','#78a888'],yellow:'#e8cc4a',moss:['#5a8a5a','#9ab060'],rock:['#1e2842','#34466a','#5f7aa6','#6a6a80'],tree:['#1f4a4a','#32705f','#5a9a86','#3a3a48'],ink:'#101830',foam:'#dfe8f5',tint:'rgba(30,50,120,.18)',nClouds:7,glint:'#f6e8a8'},
   snow:{sky:['#7d93b4','#e6edf5'],cloud:['#f6f9fc','#cfd9e6','#97a6bd'],sea:['#4a6a8c','#7a98b6','#b8cadb'],fog:'#d6e0ea',sunCol:'#f4f0ff',sunI:.8,sunPos:[-14,22,14],hemi:['#e2ebf6','#6a7a8c'],hemiI:1.25,
-    grass:['#8fa8b2','#d0dde3','#fbfdff'],yellow:'#e8d8a0',moss:['#9ab0a2','#d2dfd2'],rock:['#3a4252','#5a6678','#8a98ac','#a8b0b8'],tree:['#2a5a4a','#3f7a62','#7ab098','#5a4a40'],ink:'#2a3a50',foam:'#ffffff',tint:'rgba(120,150,200,.10)',nClouds:14,glint:'#ffffff'},
+    grass:['#3f6f46','#5f9a62','#9cc48a'],yellow:'#e8d8a0',moss:['#7a9a80','#b4cdb4'],rock:['#3a4252','#5a6678','#8a98ac','#a8b0b8'],tree:['#2a5a4a','#3f7a62','#7ab098','#5a4a40'],ink:'#2a3a50',foam:'#ffffff',tint:'rgba(120,150,200,.10)',nClouds:14,glint:'#ffffff'},
 }[theme];
 document.body.style.background=PAL.sky[0];
 
@@ -447,6 +448,7 @@ function buildIsland(){
   const top=new THREE.Mesh(flatPaint(g1,(c,cx,cy,cz,ny,f)=>{
     c.set(tri(PAL.grass,clamp(.55+cy*.04+(hsh(f*.37,5)-.5)*.22,0,1)));
     const pt=patchAt(cx,cz);if(pt>0)c.lerp(GRASS_LIT,pt*.8);
+    if(theme==='snow'){const sn=sm01((vn(cx*.11+5,cz*.11+9)*.8+hsh(f*.53,3)*.2-.4)/.1);c.lerp(SNOW_C,sn*.96);}   // 듬성듬성 눈 (초록이 군데군데 비침)
     const ed=edgeDist(cx,cz);if(ed<1.3)c.multiplyScalar(.8+.2*sm01(ed/1.3));
   }),lamb);top.receiveShadow=true;scene.add(top);
   const ring=[];
@@ -497,7 +499,7 @@ function addCrag(x,y,z,sx,sy,sz,seed){
   for(let i=0;i<p.count;i++){const vx=p.getX(i),vy=p.getY(i),vz=p.getZ(i),n=1+(hsh(vx*3.7+seed,vz*3.7+vy*2)-.5)*.3;p.setXYZ(i,vx*n,vy+(hsh(vz*5+seed,vx*5)-.5)*.18,vz*n);}
   const rk=[new THREE.Color(PAL.rock[0]),new THREE.Color(PAL.rock[1]),new THREE.Color(PAL.rock[2])];
   const g=lowPolyColor(geo,(c,cy,ny,i)=>{const r=hsh(i*.31,seed);
-    if(ny>.75)c.set(tri(PAL.grass,.45+r*.22));
+    if(ny>.75){c.set(tri(PAL.grass,.45+r*.22));if(theme==='snow'&&hsh(i*.77,seed)<.62)c.copy(SNOW_C);}
     else c.copy(rk[1]).lerp(rk[0],sm01((.1-cy)/1.1)*.55).lerp(rk[2],r*.25).multiplyScalar(.9+r*.2);});
   const m=new THREE.Mesh(g,vcMat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;scene.add(m);CRAGS.push(m);return m;
 }
@@ -517,7 +519,11 @@ function makeTree(sc,seed){
   const grp=new THREE.Group(),lm=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.32,1.5,6),lm(PAL.tree[3]));trunk.position.y=.75;trunk.castShadow=true;grp.add(trunk);
   [[1.9,2.7,2.3,0],[1.5,2.4,3.7,1],[1.05,2.1,5,2]].forEach(([r,h,y,k])=>{
-    const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,1),lm(new THREE.Color(PAL.tree[Math.min(k,1)]).lerp(new THREE.Color('#ffffff'),k*.08)));m.position.y=y;m.rotation.y=seed+k;m.castShadow=true;grp.add(m);});
+    const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,1),lm(new THREE.Color(PAL.tree[Math.min(k,1)]).lerp(new THREE.Color('#ffffff'),k*.08)));m.position.y=y;m.rotation.y=seed+k;m.castShadow=true;grp.add(m);
+    if(theme==='snow'){   // 가지 위에 눈이 조금씩 (한쪽이 비어 있는 부분 눈 덮개)
+      const cap=new THREE.Mesh(new THREE.ConeGeometry(r*.6,h*.56,7,1,false,seed*1.7+k*2,4.2+k*.5),new THREE.MeshLambertMaterial({color:'#f4f8fc',flatShading:true,side:THREE.DoubleSide}));
+      cap.position.y=y+h*.5-h*.28+.02;cap.rotation.y=m.rotation.y;grp.add(cap);}
+  });
   grp.scale.set(sc,sc*1.55,sc);return grp;
 }
 const TREES=[];
@@ -540,6 +546,38 @@ function lowRock(s,seed,col,k){
 }
 function addRock(x,z,s,seed){[x,z]=clampTarget(x,z);const m=lowRock(s,seed,new THREE.Color(PAL.rock[2]).lerp(new THREE.Color(PAL.rock[1]),.35));m.position.set(x,topY(x,z)+s*.3,z);scene.add(m);}
 for(let i=0;i<2;i++){const [x,z]=spot(2.5);addRock(x,z,.9+R7()*.4,i*7+2);}
+/* 눈사람 (눈 내리는 언덕 전용): 시계 기준 슬롯마다 모두에게 같은 자리에 잠깐 나타났다 사라짐 */
+let SNOWMAN=null;
+if(theme==='snow'){
+  const g=new THREE.Group(),L=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true}),SG=new THREE.SphereGeometry(1,10,8);
+  const sp=(c,x,y,z,sx,sy=sx,sz=sx)=>{const m=new THREE.Mesh(SG,L(c));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;g.add(m);return m;};
+  sp('#f7fafd',0,1.0,0,1.15,1.05,1.15);sp('#f7fafd',0,2.55,0,.85,.8,.85);sp('#f7fafd',0,3.7,0,.62);
+  sp('#22252c',-.22,3.78,.54,.07);sp('#22252c',.22,3.78,.54,.07);
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.1,.55,6),L('#f08a2a'));nose.rotation.x=Math.PI/2;nose.position.set(0,3.62,.78);g.add(nose);
+  for(const [y,z,r] of [[2.7,.76,.07],[2.4,.8,.07],[2.1,.8,.07]])sp('#22252c',0,y,z,r);
+  const sc=new THREE.Mesh(new THREE.TorusGeometry(.52,.13,6,14),L('#d9454f'));sc.rotation.x=Math.PI/2;sc.position.y=3.13;g.add(sc);
+  const tail=new THREE.Mesh(new THREE.BoxGeometry(.2,.7,.12),L('#d9454f'));tail.position.set(.3,2.8,.5);tail.rotation.z=.15;g.add(tail);
+  for(const sx of [-1,1]){const arm=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,1.5,5),L('#6a4a30'));arm.position.set(sx*1.15,2.75,0);arm.rotation.z=-sx*1.0;g.add(arm);}
+  const hb=new THREE.Mesh(new THREE.CylinderGeometry(.42,.46,.6,10),L('#2a2d36'));hb.position.y=4.3;g.add(hb);
+  const hr=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.07,12),L('#2a2d36'));hr.position.y=4.02;g.add(hr);
+  g.visible=false;scene.add(g);SNOWMAN={g,slot:-1,x:0,z:0};
+}
+const SM_SLOT=48;
+function updateSnowman(){
+  const S=SNOWMAN;if(!S)return;
+  const tt=Date.now()/1000,slot=Math.floor(tt/SM_SLOT),ph=tt-slot*SM_SLOT;
+  if(slot!==S.slot){
+    S.slot=slot;const R=mulberry32(slot*7919+13);let bx=-8,bz=-15;
+    for(let k=0;k<60;k++){const x=-46+R()*76,z=-42+R()*54;if(!inside(x,z,4))continue;
+      const [pu,pv]=pierUV(x,z);if(Math.abs(pu)<PIER.W/2+9&&pv>-22&&pv<8)continue;if(Math.hypot(x-STAIRS[0].cx,z-STAIRS[0].cz)<13)continue;
+      if(TREES.some(t=>Math.hypot(x-t.position.x,z-t.position.z)<4.5))continue;bx=x;bz=z;break;}
+    S.x=bx;S.z=bz;S.g.position.set(bx,topY(bx,bz),bz);S.g.rotation.y=Math.atan2(camera.position.x-bx,camera.position.z-bz)+(R()-.5)*.9;
+  }
+  const a=ph<2?0:ph<3.2?(ph-2)/1.2:ph<32?1:ph<33.2?1-(ph-32)/1.2:0;
+  if(a<=0){S.g.visible=false;return;}
+  const e=a<1?1-Math.pow(1-a,3)*(1+Math.cos(a*9)*.0):1,pop=a<1&&ph<4?1+.08*Math.sin(a*Math.PI):1;
+  S.g.visible=true;S.g.scale.setScalar(1.5*e*pop);
+}
 function addLog(x,z,yaw,len){
   [x,z]=clampTarget(x,z);
   const geo=new THREE.CylinderGeometry(.9,1.02,len,6,3),p=geo.attributes.position;geo.rotateZ(Math.PI/2);
@@ -1492,7 +1530,7 @@ STAIRS.forEach((st,i)=>{
     const geo=new THREE.CylinderGeometry(.85,1,2,7,2),p=geo.attributes.position;
     for(let i=0;i<p.count;i++){const vx=p.getX(i),vy=p.getY(i),vz=p.getZ(i),n=1+(hsh(vx*3.1+seed,vz*3.1+vy)-.5)*.34;p.setXYZ(i,vx*n,vy,vz*n);}
     const grass=sx>3.6&&R()<.65;
-    const g=lowPolyColor(geo,(c,cy,ny,i)=>{const r=hsh(i*.31,seed);if(ny>.75){if(grass)c.set(tri(PAL.grass,.35+r*.5));else c.copy(topc).multiplyScalar(.93+r*.14);}else c.copy(side).multiplyScalar(.8+r*.28);});
+    const g=lowPolyColor(geo,(c,cy,ny,i)=>{const r=hsh(i*.31,seed);if(ny>.75){if(grass){c.set(tri(PAL.grass,.35+r*.5));if(theme==='snow'&&hsh(i*.77,seed)<.6)c.copy(SNOW_C);}else c.copy(topc).multiplyScalar(.93+r*.14);}else c.copy(side).multiplyScalar(.8+r*.28);});
     const m=new THREE.Mesh(g,vcMat);m.scale.set(sx,sy,sz);m.position.set(x,WATER+up-sy,z);const yaw=R()*6;m.rotation.y=yaw;scene.add(m);
   };
 
@@ -1963,6 +2001,7 @@ function frame(now){
   const mp=motes.p.geometry.attributes.position;
   for(let i=0;i<mp.count;i++){let x=mp.getX(i)+motes.vel[i*2]*dt;if(x>28)x=-44;mp.setXYZ(i,x,1.2+Math.sin(T*1.1+motes.vel[i*2+1])*1.1+((i*37)%10)*.18,mp.getZ(i));}
   mp.needsUpdate=true;
+  updateSnowman();
   if(snow){snow.material.uniforms.uTime.value=T;snow.material.uniforms.uScale.value=renderer.getPixelRatio();}
   if(rain){const rp=rain.geometry.attributes.position;for(let i=0;i<rp.count;i+=2){let y=rp.getY(i)-30*dt;if(y<-12)y+=52;const x=rp.getX(i);rp.setXYZ(i,x,y,rp.getZ(i));rp.setXYZ(i+1,x+.15,y-1.2,rp.getZ(i+1));}rp.needsUpdate=true;}
   updateCrash(T,dt);
