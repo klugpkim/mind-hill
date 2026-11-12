@@ -1065,7 +1065,8 @@ function spawnBubble(e,text,scream,local){
   el.className='bub glass'+(scream?(text.length>9?' s sm':' s'):'')+(local?' loc':'');
   el.textContent=text;el.append(document.createElement('i'),document.createElement('i'));
   el.style.opacity='0';bubLayer.appendChild(el);
-  bubbles.push({el,x:sx,y:sy,vx:rnd(55,80)*UK,vy:-rnd(22,36)*UK,t:0,seed:Math.random()*6});
+  const worry=!scream&&text!=='♡',k=worry?.62:1;   // 고민 말풍선은 더 오래, 더 천천히 날아가며 서서히 사라짐
+  bubbles.push({el,x:sx,y:sy,vx:rnd(55,80)*UK*k,vy:-rnd(22,36)*UK*k,t:0,seed:Math.random()*6,life:worry?9.5:BUBBLE_LIFE,fadeAt:worry?.3:.45});
 }
 
 /* ---------- 명상 모닥불 (로우폴리) ---------- */
@@ -1911,10 +1912,13 @@ function submit(){
   const r=checkText($('txt').value);
   if(!r.ok){$('err').textContent=r.why;return;}
   $('modal').classList.remove('on');cdUntil=Date.now()+COOLDOWN;
+  // 앉아 있거나 울고 있는 등 다른 동작 중이면 동작은 그대로 두고 말풍선만 날림
+  const keep=['sit','cry','scream','hug'].includes(me.mode);
+  if(keep)fireBubble(me,r.text,false,!!r.care);
   if(r.care){
-    startAnim('cup',{at:.5,text:r.text,scream:false,local:true});
+    if(!keep)startAnim('cup',{at:.5,text:r.text,scream:false,local:true});
     toast('혼자 버티지 않아도 괜찮아요. 너무 힘들다면 자살예방상담전화 109(24시간)에 전화해보세요. 이 글은 다른 사람에게는 보이지 않아요.',7000);
-  }else startAnim('cup',{at:.5,text:r.text,scream:false});
+  }else if(!keep)startAnim('cup',{at:.5,text:r.text,scream:false});
 }
 $('send').onclick=submit;
 $('txt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();submit();}});
@@ -1972,10 +1976,10 @@ function frame(now){
   for(const e of [me,...peers.values()]){const [sx,sy]=toScreen(e.x,topY(e.x,e.z),e.z);e.label.style.transform=`translate(${sx}px,${sy+8*UK}px) translate(-50%,0)`;}
   for(let i=bubbles.length-1;i>=0;i--){
     const b=bubbles[i];b.t+=dt;
-    if(b.t>BUBBLE_LIFE){b.el.remove();bubbles.splice(i,1);continue;}
+    if(b.t>b.life){b.el.remove();bubbles.splice(i,1);continue;}
     b.x+=(b.vx+Math.sin(b.t*1.8+b.seed)*14*UK)*dt;b.y+=b.vy*dt;
-    const pop=Math.min(1,b.t/.35),fade=b.t<BUBBLE_LIFE*.45?1:Math.max(0,1-(b.t-BUBBLE_LIFE*.45)/(BUBBLE_LIFE*.55));
-    const sc=(.6+.4*pop)*(1-.2*b.t/BUBBLE_LIFE);
+    const pop=Math.min(1,b.t/.35),fade=b.t<b.life*b.fadeAt?1:Math.max(0,1-(b.t-b.life*b.fadeAt)/(b.life*(1-b.fadeAt)));
+    const sc=(.6+.4*pop)*(1-.2*b.t/b.life);
     b.el.style.opacity=fade*Math.min(1,b.t*5);
     b.el.style.transform=`translate(${b.x}px,${b.y}px) translate(-50%,-100%) scale(${sc})`;
   }
