@@ -448,7 +448,7 @@ function buildIsland(){
   const top=new THREE.Mesh(flatPaint(g1,(c,cx,cy,cz,ny,f)=>{
     c.set(tri(PAL.grass,clamp(.55+cy*.04+(hsh(f*.37,5)-.5)*.22,0,1)));
     const pt=patchAt(cx,cz);if(pt>0)c.lerp(GRASS_LIT,pt*.8);
-    if(theme==='snow'){const sn=sm01((vn(cx*.11+5,cz*.11+9)*.8+hsh(f*.53,3)*.2-.4)/.1);c.lerp(SNOW_C,sn*.96);}   // 듬성듬성 눈 (초록이 군데군데 비침)
+    if(theme==='snow'){const sn=sm01((vn(cx*.11+5,cz*.11+9)*.8+hsh(f*.53,3)*.2-.27)/.1);c.lerp(SNOW_C,sn*.96);}   // 듬성듬성 눈 (초록이 군데군데 비침)
     const ed=edgeDist(cx,cz);if(ed<1.3)c.multiplyScalar(.8+.2*sm01(ed/1.3));
   }),lamb);top.receiveShadow=true;scene.add(top);
   const ring=[];
@@ -499,7 +499,7 @@ function addCrag(x,y,z,sx,sy,sz,seed){
   for(let i=0;i<p.count;i++){const vx=p.getX(i),vy=p.getY(i),vz=p.getZ(i),n=1+(hsh(vx*3.7+seed,vz*3.7+vy*2)-.5)*.3;p.setXYZ(i,vx*n,vy+(hsh(vz*5+seed,vx*5)-.5)*.18,vz*n);}
   const rk=[new THREE.Color(PAL.rock[0]),new THREE.Color(PAL.rock[1]),new THREE.Color(PAL.rock[2])];
   const g=lowPolyColor(geo,(c,cy,ny,i)=>{const r=hsh(i*.31,seed);
-    if(ny>.75){c.set(tri(PAL.grass,.45+r*.22));if(theme==='snow'&&hsh(i*.77,seed)<.62)c.copy(SNOW_C);}
+    if(ny>.75){c.set(tri(PAL.grass,.45+r*.22));if(theme==='snow'&&hsh(i*.77,seed)<.82)c.copy(SNOW_C);}
     else c.copy(rk[1]).lerp(rk[0],sm01((.1-cy)/1.1)*.55).lerp(rk[2],r*.25).multiplyScalar(.9+r*.2);});
   const m=new THREE.Mesh(g,vcMat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;scene.add(m);CRAGS.push(m);return m;
 }
@@ -549,34 +549,35 @@ for(let i=0;i<2;i++){const [x,z]=spot(2.5);addRock(x,z,.9+R7()*.4,i*7+2);}
 /* 눈사람 (눈 내리는 언덕 전용): 시계 기준 슬롯마다 모두에게 같은 자리에 잠깐 나타났다 사라짐 */
 let SNOWMAN=null;
 if(theme==='snow'){
-  const g=new THREE.Group(),L=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true}),SG=new THREE.SphereGeometry(1,10,8);
-  const sp=(c,x,y,z,sx,sy=sx,sz=sx)=>{const m=new THREE.Mesh(SG,L(c));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;g.add(m);return m;};
-  sp('#f7fafd',0,1.0,0,1.15,1.05,1.15);sp('#f7fafd',0,2.55,0,.85,.8,.85);sp('#f7fafd',0,3.7,0,.62);
-  sp('#22252c',-.22,3.78,.54,.07);sp('#22252c',.22,3.78,.54,.07);
-  const nose=new THREE.Mesh(new THREE.ConeGeometry(.1,.55,6),L('#f08a2a'));nose.rotation.x=Math.PI/2;nose.position.set(0,3.62,.78);g.add(nose);
-  for(const [y,z,r] of [[2.7,.76,.07],[2.4,.8,.07],[2.1,.8,.07]])sp('#22252c',0,y,z,r);
-  const sc=new THREE.Mesh(new THREE.TorusGeometry(.52,.13,6,14),L('#d9454f'));sc.rotation.x=Math.PI/2;sc.position.y=3.13;g.add(sc);
-  const tail=new THREE.Mesh(new THREE.BoxGeometry(.2,.7,.12),L('#d9454f'));tail.position.set(.3,2.8,.5);tail.rotation.z=.15;g.add(tail);
-  for(const sx of [-1,1]){const arm=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,1.5,5),L('#6a4a30'));arm.position.set(sx*1.15,2.75,0);arm.rotation.z=-sx*1.0;g.add(arm);}
-  const hb=new THREE.Mesh(new THREE.CylinderGeometry(.42,.46,.6,10),L('#2a2d36'));hb.position.y=4.3;g.add(hb);
-  const hr=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.07,12),L('#2a2d36'));hr.position.y=4.02;g.add(hr);
+  // 레퍼런스(로우폴리 페이퍼 스타일) 눈사람: 면이 보이는 통통한 두 덩어리 + 검정 모자 + 초록 목도리
+  const g=new THREE.Group(),L=(c)=>new THREE.MeshLambertMaterial({color:c,flatShading:true}),IG=new THREE.IcosahedronGeometry(1,1);
+  const ball=(c,y,r,sy)=>{const m=new THREE.Mesh(IG,L(c));m.position.y=y;m.scale.set(r,r*sy,r);m.castShadow=true;g.add(m);return m;};
+  const baseG=IG.clone(),bp=baseG.attributes.position;for(let q=0;q<bp.count;q++)if(bp.getY(q)<-.5)bp.setY(q,-.5);   // 아래를 평평하게 잘라 바닥에 붙은 반구 느낌
+  const base=new THREE.Mesh(baseG,L('#f6f4ef'));base.position.y=.52;base.scale.set(.98,1.1,.98);base.castShadow=true;g.add(base);
+  ball('#f8f6f2',1.95,.66,.92);
+  for(const sx of [-1,1]){const ey=new THREE.Mesh(new THREE.CircleGeometry(.1,6),new THREE.MeshBasicMaterial({color:'#15161a'}));ey.position.set(sx*.25,2.05,.6);ey.rotation.y=sx*.28;g.add(ey);}
+  const ns=new THREE.Mesh(new THREE.ConeGeometry(.12,.38,4),L('#f08a2a'));ns.rotation.x=Math.PI/2;ns.position.set(0,1.9,.78);g.add(ns);
+  const col=new THREE.Mesh(new THREE.CylinderGeometry(.72,.95,.26,8),L('#3f9a55'));col.position.y=1.38;col.castShadow=true;g.add(col);
+  const tail=new THREE.Mesh(new THREE.BoxGeometry(.4,.82,.12),L('#3f9a55'));tail.position.set(.42,.98,.82);tail.rotation.set(.12,0,-.18);tail.castShadow=true;g.add(tail);
+  const brim=new THREE.Mesh(new THREE.CylinderGeometry(.98,.98,.1,4),L('#1c1d22'));brim.rotation.y=Math.PI/4;brim.position.set(0,2.5,0);brim.rotation.z=.06;brim.castShadow=true;g.add(brim);
+  const crown=new THREE.Mesh(new THREE.CylinderGeometry(.5,.58,.6,4),L('#1c1d22'));crown.rotation.y=Math.PI/4;crown.position.set(0,2.84,0);crown.castShadow=true;g.add(crown);
   g.visible=false;scene.add(g);SNOWMAN={g,slot:-1,x:0,z:0};
 }
-const SM_SLOT=48;
+const snowOn=Math.random()<.55,snowSeed=Math.random();   // 진입할 때 한 번 랜덤으로 있을지 결정 (고양이·강아지와 동일한 방식)
 function updateSnowman(){
-  const S=SNOWMAN;if(!S)return;
-  const tt=Date.now()/1000,slot=Math.floor(tt/SM_SLOT),ph=tt-slot*SM_SLOT;
-  if(slot!==S.slot){
-    S.slot=slot;const R=mulberry32(slot*7919+13);let bx=-8,bz=-15;
-    for(let k=0;k<60;k++){const x=-46+R()*76,z=-42+R()*54;if(!inside(x,z,4))continue;
-      const [pu,pv]=pierUV(x,z);if(Math.abs(pu)<PIER.W/2+9&&pv>-22&&pv<8)continue;if(Math.hypot(x-STAIRS[0].cx,z-STAIRS[0].cz)<13)continue;
-      if(TREES.some(t=>Math.hypot(x-t.position.x,z-t.position.z)<4.5))continue;bx=x;bz=z;break;}
-    S.x=bx;S.z=bz;S.g.position.set(bx,topY(bx,bz),bz);S.g.rotation.y=Math.atan2(camera.position.x-bx,camera.position.z-bz)+(R()-.5)*.9;
+  const S=SNOWMAN;if(!S||!snowOn)return;
+  if(S.slot<0){
+    S.slot=0;const camA=Math.atan2(CAM_BASE.z-IC[1],CAM_BASE.x-IC[0]);
+    let a=0,E=null;
+    for(let j=0;j<24;j++){
+      a=camA+(hash01(snowSeed*997+j*4.1+7)-.5)*1.1;E=clampTarget(IC[0]+Math.cos(a)*200,IC[1]+Math.sin(a)*200);
+      const ex=IC[0]+(E[0]-IC[0])*.92,ez=IC[1]+(E[1]-IC[1])*.92,[pu,pv]=pierUV(ex,ez);
+      if(Math.abs(pu)<PIER.W/2+5&&pv>-22&&pv<8)continue;if(Math.hypot(ex-STAIRS[0].cx,ez-STAIRS[0].cz)<11)continue;
+      const [sx,sy]=toScreen(ex,topY(ex,ez)+.5,ez);if(sx>VW()*.2&&sx<VW()*.8&&sy>VH()*.4&&sy<VH()*.74)break;
+    }
+    S.x=IC[0]+(E[0]-IC[0])*.92;S.z=IC[1]+(E[1]-IC[1])*.92;S.g.position.set(S.x,topY(S.x,S.z),S.z);
+    S.g.rotation.y=Math.atan2(Math.cos(a),Math.sin(a))+(hash01(snowSeed*53+3)-.5)*.5;S.g.scale.setScalar(1.1);S.g.visible=true;
   }
-  const a=ph<2?0:ph<3.2?(ph-2)/1.2:ph<32?1:ph<33.2?1-(ph-32)/1.2:0;
-  if(a<=0){S.g.visible=false;return;}
-  const e=a<1?1-Math.pow(1-a,3)*(1+Math.cos(a*9)*.0):1,pop=a<1&&ph<4?1+.08*Math.sin(a*Math.PI):1;
-  S.g.visible=true;S.g.scale.setScalar(1.5*e*pop);
 }
 function addLog(x,z,yaw,len){
   [x,z]=clampTarget(x,z);
@@ -1530,7 +1531,7 @@ STAIRS.forEach((st,i)=>{
     const geo=new THREE.CylinderGeometry(.85,1,2,7,2),p=geo.attributes.position;
     for(let i=0;i<p.count;i++){const vx=p.getX(i),vy=p.getY(i),vz=p.getZ(i),n=1+(hsh(vx*3.1+seed,vz*3.1+vy)-.5)*.34;p.setXYZ(i,vx*n,vy,vz*n);}
     const grass=sx>3.6&&R()<.65;
-    const g=lowPolyColor(geo,(c,cy,ny,i)=>{const r=hsh(i*.31,seed);if(ny>.75){if(grass){c.set(tri(PAL.grass,.35+r*.5));if(theme==='snow'&&hsh(i*.77,seed)<.6)c.copy(SNOW_C);}else c.copy(topc).multiplyScalar(.93+r*.14);}else c.copy(side).multiplyScalar(.8+r*.28);});
+    const g=lowPolyColor(geo,(c,cy,ny,i)=>{const r=hsh(i*.31,seed);if(ny>.75){if(grass){c.set(tri(PAL.grass,.35+r*.5));if(theme==='snow'&&hsh(i*.77,seed)<.8)c.copy(SNOW_C);}else c.copy(topc).multiplyScalar(.93+r*.14);}else c.copy(side).multiplyScalar(.8+r*.28);});
     const m=new THREE.Mesh(g,vcMat);m.scale.set(sx,sy,sz);m.position.set(x,WATER+up-sy,z);const yaw=R()*6;m.rotation.y=yaw;scene.add(m);
   };
 
@@ -2012,6 +2013,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+updatePets();updateSnowman();
 setTimeout(()=>{$('loading').style.opacity='0';setTimeout(()=>$('loading').remove(),600);},400);
 let hintT=0;
 function showHint(){if($('modal').classList.contains('on')||full)return;const el=$('hint');el.classList.add('on');clearTimeout(hintT);hintT=setTimeout(()=>el.classList.remove('on'),4200);}
