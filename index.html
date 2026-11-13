@@ -90,6 +90,16 @@ html,body{margin:0;height:100%;overscroll-behavior:none;touch-action:manipulatio
 #dbox .acctrow .bank{font-size:12px;opacity:.85}
 #dbox .acctrow .num{font-size:12px;font-weight:600;letter-spacing:.02em}
 #dbox #copy-acct{display:block;margin:8px auto 0;font-size:11px}
+#dbox .kcard{width:232px;margin:0 auto;padding:16px 18px 18px;box-sizing:border-box;border-radius:24px;background:#f5f5f8;color:#1c1c20;text-align:center;border:0}
+#dbox .kplogo{display:block;height:24px;width:auto;margin:0 0 12px;pointer-events:none;-webkit-user-select:none;user-select:none}
+#dbox .qrwhite{width:196px;height:196px;margin:0 auto;background:#fff;display:flex;align-items:center;justify-content:center}
+#donate #dbox .kcard #donate-qr{width:188px!important;height:188px!important;margin:0;padding:0;border-radius:0;display:block}
+#dbox .qrname{margin-top:10px;font-size:12px;font-weight:500;letter-spacing:-.01em}
+#dbox .bankbar{width:232px;margin:12px auto 0;padding:12px 14px;box-sizing:border-box;border-radius:20px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#3b86f7,#1f62d6);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 6px 18px rgba(20,60,160,.3);text-align:left}
+#dbox .bankbar .tlogo{width:28px;height:28px;border-radius:9px;flex:none;object-fit:contain;background:#fff;padding:4px;box-sizing:border-box}
+#dbox .bankbar .bt{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+#dbox .bankbar .bank{font-size:11px;opacity:.85}#dbox .bankbar .num{font-size:15px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+#dbox .bankbar #copy-acct{margin:0;display:block;flex:none;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.22);opacity:1;text-decoration:none;font-size:12px;font-weight:500;color:#fff}
 @keyframes dpop{from{opacity:0;transform:translateY(18px) scale(.92)}to{opacity:1;transform:none}}
 @keyframes dfade{from{opacity:0;transform:translateY(6px)}to{opacity:.92;transform:none}}
 #donate.on #dbox{animation:dpop .5s cubic-bezier(.2,.8,.2,1)}
@@ -194,12 +204,14 @@ window.__showErr=show;})();
     <div class="thanks">
       <p class="lead">고요한 언덕에 평온을 찾길 바라며...</p>
     </div>
-    <div class="paybox">
-      <img id="donate-qr" src="donate-qr.png" alt="토스 후원 QR" draggable="false" oncontextmenu="return false">
-      <div id="donate-info">
-        <div class="acctrow"><img class="tlogo" src="toss-logo.webp" alt="토스" draggable="false"><span class="bank">토스</span><span class="num">1000-0896-5072</span></div>
-        <button id="copy-acct">복사</button>
-      </div>
+    <div class="paybox kcard">
+      <img class="kplogo" src="kakaopay.svg" alt="카카오페이" draggable="false">
+      <div class="qrwhite"><img id="donate-qr" src="donate-qr.png?v=3" alt="후원 QR" draggable="false" oncontextmenu="return false"></div>
+    </div>
+    <div class="bankbar">
+      <img class="tlogo" src="toss-logo.webp" alt="토스뱅크" draggable="false">
+      <div class="bt"><span class="bank">토스뱅크</span><span class="num">1000-0896-5072</span></div>
+      <button id="copy-acct">복사</button>
     </div>
     <div class="sign">
       <p>고요한 언덕에서 모든 이가 평온을 찾기를.</p>
